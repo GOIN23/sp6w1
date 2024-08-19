@@ -1,49 +1,50 @@
 import { CommandHandler, EventBus, ICommandHandler } from "@nestjs/cqrs";
 import { UsersRepository } from "../../infrastructure/users.repository";
-import { InterlayerNotice } from "src/utilit/interLayer/inter-layer";
-import { UserCreatedEvent } from "../events/user-created-event";
+import * as bcrypt from 'bcrypt';
+import { User } from "../../domain/createdBy-user-Admin.entity";
+import { randomUUID } from "crypto";
+import { add } from "date-fns";
+import { EmailAdapter } from "src/features/auth/application/emai-Adapter";
+
 
 export class CreateUserCommand {
     constructor(
-        public name: string,
-        public email?: string,
+        public login: string,
+        public email: string,
+        public password: string,
+
     ) { }
 }
 
 @CommandHandler(CreateUserCommand)
-export class CreateUserUseCase
-    implements
-    ICommandHandler<CreateUserCommand, InterlayerNotice<CreateUserResultData>> {
-    constructor(
-        private readonly usersRepository: UsersRepository,
-        // шина ивентов
-        private readonly eventBus: EventBus,
-    ) { }
+export class CreateUserUseCase implements ICommandHandler<CreateUserCommand> {
+    constructor(private readonly usersRepository: UsersRepository, protected emailAdapter: EmailAdapter) { }
 
-    async execute(
-        command: CreateUserCommand,
-    ): Promise<InterlayerNotice<CreateUserResultData>> {
-        const { name, email } = command;
-        const notice = new InterlayerNotice<CreateUserResultData>();
+    async execute(dtoInputDate: CreateUserCommand) {
+        const passwordSalt = await bcrypt.genSalt(10);
+        const hash = await bcrypt.hash(dtoInputDate.password, passwordSalt);
 
-
-        // Вариант валидации на уровне BLL
-        if (email === 'admin@site.com') {
-            notice.addError('Email not valid', 'email');
-            return notice;
+        const newUser: User = {
+            createdAt: new Date().toISOString(),
+            email: dtoInputDate.email,
+            login: dtoInputDate.login,
+            passwordHash: hash,
+            passwordSalt: passwordSalt,
+            emailConfirmation: {
+                confirmationCode: randomUUID(),
+                expirationDate: add(new Date(), {
+                    hours: 1,
+                    minutes: 30,
+                }),
+                isConfirmed: false
+            }
         }
 
-        const result = await this.usersRepository.creatInDbUser(user);
+        const userId = await this.usersRepository.creatInDbUser(newUser)
 
-        // В шину событий публикуем событие UserCreatedEvent
-        this.eventBus.publish(new UserCreatedEvent(name));
+        this.emailAdapter.sendEmail(newUser.emailConfirmation.confirmationCode, newUser.email);
 
-        notice.addData({ userId: result.id });
+        return userId
 
-        return notice;
     }
 }
-
-export type CreateUserResultData = {
-    userId: string;
-};

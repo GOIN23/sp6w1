@@ -4,11 +4,15 @@ import { Model } from 'mongoose';
 import { Posts } from '../domain/posts.entity';
 import { PostViewModelLiKeArray } from '../type/typePosts';
 import { PostsCreateModel } from '../models/input/create-posts.input.bodel';
+import { CommentViewModelDb, PostLikeT } from 'src/features/comments/type/typeCommen';
+import { Comments } from '../../comments/domain/comments.entity';
+import { LikesCommentsInfo } from '../../comments/domain/likes.entity';
+import { LikesPostInfo } from '../domain/likes-posts.entity';
 
 
 @Injectable()
 export class PostRepository {
-    constructor(@InjectModel(Posts.name) private postModel: Model<Posts>) { }
+    constructor(@InjectModel(Posts.name) private postModel: Model<Posts>, @InjectModel(Comments.name) private commentsModel: Model<Comments>, @InjectModel(LikesCommentsInfo.name) private likesModule: Model<LikesCommentsInfo>, @InjectModel(LikesPostInfo.name) private likesPostModule: Model<LikesPostInfo>) { }
 
 
     async creatInDbPost(newUser: PostViewModelLiKeArray) {
@@ -23,11 +27,35 @@ export class PostRepository {
         );
     }
 
-    async deletePost(id:string){
+    async deletePost(id: string) {
         await this.postModel.deleteOne({ _id: id });
 
     }
+    async createCommentPost(body: CommentViewModelDb): Promise<void> {
+        await this.commentsModel.insertMany(body);
+    }
 
+    async createLikeInfoMetaDataComment(body: any): Promise<void> {
+        await this.likesModule.insertMany(body);
+    }
 
+    async findLikeDislakePost(userID: string, postId: string): Promise<PostLikeT | boolean> {
+        try {
+            const res = await this.likesPostModule.findOne({ userID: userID, postId: postId });
+            if (!res) {
+                return false;
+            }
+            return true;
+        } catch {
+            return false
 
+        }
+
+    }
+    async addLikeDislikeInPosts(likesPostInfo: any) {
+        await this.likesPostModule.insertMany(likesPostInfo);
+    }
+    async updateLikeStatusInPosts(userId: string, likeStatus: string, postId: string) {
+        await this.likesPostModule.updateOne({ userID: userId, postId: postId }, { $set: { status: likeStatus } });
+    }
 }

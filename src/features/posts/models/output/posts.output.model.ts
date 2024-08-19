@@ -33,7 +33,7 @@ export const postOutputModelMapper = (post: any): postsOutputModel => {
         dislikesCount: post.extendedLikesInfo.dislikesCount,
         likesCount: post.extendedLikesInfo.likesCount,
         myStatus: post.extendedLikesInfo.myStatus,
-        newestLikes: []
+        newestLikes: post.extendedLikesInfo.newestLikes
     }
 
     return outputModel;

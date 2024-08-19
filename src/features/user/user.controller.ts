@@ -6,20 +6,22 @@ import { UsersQueryRepository } from "./infrastructure/users.query-repository";
 import { qureT } from "src/utilit/TYPE/generalType";
 import { DefaultValuesPipeUser, QueryParamsDto } from "src/utilit/dto/dto.query.user";
 import { AuthGuard } from "src/utilit/guards/basic-auth-guards";
+import { CommandBus } from "@nestjs/cqrs";
+import { CreateUserCommand } from "./application/use-case/create-use-case";
 
 
 
 @Controller('users')
 @UseGuards(AuthGuard)
 export class UsersController {
-    constructor(protected usersService: UsersService, protected usersQueryRepository: UsersQueryRepository,) { }
+    constructor(protected usersService: UsersService, protected usersQueryRepository: UsersQueryRepository, private commandBuse: CommandBus) { }
 
     @Post()
     @HttpCode(201)
     async createUser(@Body() createModel: UserCreateModel): Promise<UserOutputModel> {
-        const result = await this.usersService.creatUser(createModel.email, createModel.login, createModel.password)
+        const userId = await this.commandBuse.execute(new CreateUserCommand(createModel.login, createModel.email, createModel.password))
 
-        return await this.usersQueryRepository.getById(result);
+        return await this.usersQueryRepository.getById(userId);
     }
 
 

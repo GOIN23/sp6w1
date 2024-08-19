@@ -1,15 +1,18 @@
 import { BadRequestException, INestApplication, ValidationPipe, } from '@nestjs/common';
+import { HttpAdapterHost } from '@nestjs/core';
 import { useContainer } from 'class-validator';
 import { AppModule } from 'src/app.module';
-import { HttpExceptionFilter } from 'src/utilit/exception-filters/http-exception-filter';
+import { AllExceptionsFilter, HttpErrorFilter, HttpExceptionFilter } from 'src/utilit/exception-filters/http-exception-filter';
+import { LoggingInterceptor } from 'src/utilit/interceptors/login-inte';
 
 // Префикс нашего приложения (http://site.com/api)
 const APP_PREFIX = '/api';
 
 // Используем данную функцию в main.ts и в e2e тестах
 export const applyAppSettings = (app: INestApplication) => {
+
     // Применение глобальных Interceptors
-    // app.useGlobalInterceptors()
+    app.useGlobalInterceptors(new LoggingInterceptor())// Interceptor также можно добавить в отдельных конролерах или в роутреах
     useContainer(app.select(AppModule), { fallbackOnErrors: true })
 
     // Применение глобальных Guards
@@ -41,14 +44,13 @@ const setAppPipes = (app: INestApplication) => {
 
     app.useGlobalPipes(
         new ValidationPipe({
-            
+
             // Для работы трансформации входящих данных
             transform: true,
             // Выдавать первую ошибку для каждого поля
             stopAtFirstError: true,
             // Перехватываем ошибку, кастомизируем её и выкидываем 400 с собранными данными
             exceptionFactory: (errors) => {
-
                 const customErrors = [];
 
                 errors.forEach((e) => {
@@ -69,5 +71,5 @@ const setAppPipes = (app: INestApplication) => {
 };
 
 const setAppExceptionsFilters = (app: INestApplication) => {
-    app.useGlobalFilters(new HttpExceptionFilter());
+    app.useGlobalFilters( new AllExceptionsFilter());
 };

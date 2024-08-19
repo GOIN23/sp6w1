@@ -6,9 +6,8 @@ import { blogOutputModelMapper } from "../models/output/blog.output.model";
 import { QueryBlogsParamsDto } from "../dto/dto.query.body";
 import { BlogViewModelDbT, BlogViewModelT } from "../TYPE/typeBlog";
 import { SortDirection } from "mongodb";
-import { BlogCreateModel } from "../models/input/create-blog.input.bodel";
-import { Posts } from "src/features/posts/domain/posts.entity";
 import { PostViewModelLiKeArrayDB, PostViewModelT } from "src/features/posts/type/typePosts";
+import { Posts } from "../../posts/domain/posts.entity";
 // import { PostViewModelLiKeArrayDB, PostViewModelT, PostViewModelTdb } from "src/posts/type/typePosts";
 // import { Posts } from "src/posts/domain/posts.entity";
 
@@ -28,6 +27,7 @@ export class BlogsQueryRepository {
     }
 
     async getBlogs(query: QueryBlogsParamsDto): Promise<any | { error: string }> {
+        debugger
         const search = query.searchNameTerm ? { name: { $regex: query.searchNameTerm, $options: "i" } } : {};
         const filter = {
             ...search,

@@ -9,9 +9,8 @@ import { Types } from "mongoose";
 import { User } from "../domain/createdBy-user-Admin.entity";
 import { add } from "date-fns";
 import * as bcrypt from 'bcrypt';
-import { UsersAuthService } from "src/features/auth/application/auth-service";
 import { randomUUID } from "crypto";
-import { EmailAdapter } from "src/features/auth/application/emai-Adapter";
+import { EmailAdapter } from "../../auth/application/emai-Adapter";
 
 
 
@@ -43,12 +42,12 @@ export class UsersService {
         }
 
         const userId = await this.usersRepository.creatInDbUser(newUser)
-        
-        // try {
-        //     await this.emailAdapter.sendEmail(newUser.emailConfirmation.confirmationCode, newUser.email);
-        // } catch (error) {
-        //     console.log(error);
-        // }
+
+        try {
+            await this.emailAdapter.sendEmail(newUser.emailConfirmation.confirmationCode, newUser.email);
+        } catch (error) {
+            console.log(error);
+        }
 
         return userId
     }

@@ -10,12 +10,12 @@ export class JwtAccessStrategy extends PassportStrategy(Strategy) {
         super({
             jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
             ignoreExpiration: false,
-            secretOrKey: 'your_secret_key'
+            secretOrKey: 'your_secret_key',
+
         })
     }
 
     async validate(payload: any) {
-
         const user = await this.usersAuthService.findUsers(payload.sub); // Предположим, у вас есть метод findById
         if (!user) {
             throw new UnauthorizedException();

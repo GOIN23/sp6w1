@@ -50,13 +50,14 @@ export class UsersAuthService {
 
     }
     async login(user: any) {
-        const payload = { username: user.login, sub: user.userId };
+        const payload = { userLogin: user.login, userId: user.userId };
+
         return {
             accessToken: this.jwtService.sign(payload),
+            refreshToken: this.jwtService.sign(payload, { expiresIn: "24h" })
         };
     }
     async checkCreadentlais(loginOrEmail: string, password: string) {
-        debugger
         const user = await this.usersRepository.findBlogOrEmail(loginOrEmail);
         if (!user) return false;
 
@@ -88,7 +89,6 @@ export class UsersAuthService {
         return null;
     }
     async resendingCode(email: string) {
-        debugger
         const user = await this.usersRepository.findBlogOrEmail(email);
 
         if (!user) {

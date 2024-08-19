@@ -1,8 +1,8 @@
-import { IsInt, IsOptional, IsString } from "class-validator";
-
-
-
+import { IsInt, isNumber, IsOptional, IsString } from "class-validator";
 import { PipeTransform, Injectable, ArgumentMetadata } from '@nestjs/common';
+import { Type } from "class-transformer";
+
+
 
 @Injectable()
 export class DefaultValuesPipe implements PipeTransform {
@@ -29,21 +29,23 @@ export class DefaultValuesPipe implements PipeTransform {
 export class QueryBlogsParamsDto {
     @IsOptional()
     @IsString()
-    sortBy: string = 'createdAt'; // значение по умолчанию
+    sortBy?: string // значение по умолчанию
 
     @IsOptional()
     @IsString()
-    sortDirection: 'asc' | 'desc' = 'desc'; // значение по умолчанию
+    sortDirection?: 'asc' | 'desc'
 
     @IsOptional()
     @IsInt()
-    pageNumber: number = 1; // значение по умолчанию
+    @Type(() => Number)
+    pageNumber?: number
 
     @IsOptional()
     @IsInt()
-    pageSize?: number = 10; // значение по умолчанию
+    @Type(() => Number)
+    pageSize?: number
 
     @IsOptional()
     @IsString()
-    searchNameTerm: string = null
+    searchNameTerm?: string
 }

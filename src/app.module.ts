@@ -1,6 +1,5 @@
-import { Schema } from '@nestjs/mongoose';
 
-import { Module, Provider } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule, Provider, RequestMethod } from '@nestjs/common';
 import { LoginIsExistContsraint } from './features/user/validate/login-is-exist.decorator';
 import { UsersRepository } from './features/user/infrastructure/users.repository';
 import { UsersService } from './features/user/application/users.service';
@@ -26,11 +25,25 @@ import { EmailAdapter } from './features/auth/application/emai-Adapter';
 import { UsersCreatedRepository } from './features/auth/infrastructure/users.repository';
 import { AuthController } from './features/auth/api/auth.controller';
 import { RecoveryPassword, RecoveryPasswordSchema } from './features/auth/domain/recovery-password-code';
-import { JwtAccessStrategy } from './utilit/strategies/jwt-auth-strategies';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import configuration, { ConfigurationType, validate } from './settings/configuration';
 import { CqrsModule } from '@nestjs/cqrs';
+import { CreateUserCommand, CreateUserUseCase } from './features/user/application/use-case/create-use-case';
+import { GetUserUseCase } from './features/user/application/use-case/get-use-case';
+import { CommentsController } from './features/comments/api/comments-controller';
+import { DeleteeCommentrUseCase } from './features/comments/application/use-case/delete-use-case';
+import { UpdateLikeDislikeOnCommentUseCase } from './features/comments/application/use-case/updateLileOnComment-use-case';
+import { CommentsService } from './features/comments/application/commets.service';
+import { CommentsQueryRepository } from './features/comments/infrastructure/comments-query-repository';
+import { CommentsRepository } from './features/comments/infrastructure/comments-repository';
+import { updateCommentUseCase } from './features/comments/application/use-case/update-use-case';
+import { Comments, CommentSchema } from './features/comments/domain/comments.entity';
+import { LikesCommentsInfo, LikesCommentsSchema } from './features/comments/domain/likes.entity';
+import { LikesPostInfo, LLikesPostInfoSchema } from './features/posts/domain/likes-posts.entity';
+import { LoggerMiddlewar2, LoggerMiddleware } from './utilit/middlewares/logger.middleware';
+import { NameIsExistConstraint } from './utilit/decorators/transform/blogFind';
+import { JwtAccessStrategy } from './utilit/strategies/jwt-auth-strategies';
 
 
 
@@ -38,8 +51,13 @@ import { CqrsModule } from '@nestjs/cqrs';
 
 
 const usersProviders: Provider[] = [UsersRepository, UsersService, UsersQueryRepository]
+const useCaseUser = [CreateUserUseCase, GetUserUseCase]
+
 const blogsProvides: Provider[] = [BlogService, BlogRepository, BlogsQueryRepository]
 const postsProvedis: Provider[] = [PostsService, PostsQueryRepository, PostRepository]
+
+const commentsProvides: Provider[] = [CommentsService, CommentsQueryRepository, CommentsRepository]
+const useCaseComment: Provider[] = [DeleteeCommentrUseCase, updateCommentUseCase, UpdateLikeDislikeOnCommentUseCase]
 const authProviders: Provider[] = [UsersAuthService, EmailAdapter, UsersCreatedRepository]
 
 
@@ -50,7 +68,9 @@ const authProviders: Provider[] = [UsersAuthService, EmailAdapter, UsersCreatedR
         uri: configService.get<ConfigurationType>('dbSettings', { infer: true }).MONGO_CONNECTION_URI
       }),
       inject: [ConfigService], // Инъекция ConfigService
-    }), MongooseModule.forFeature([{ name: User.name, schema: UserSchema }, { name: Blog.name, schema: BlogSchema }, { name: Posts.name, schema: PostSchema }, { name: RecoveryPassword.name, schema: RecoveryPasswordSchema },]),
+    }),
+    MongooseModule.forFeature([{ name: User.name, schema: UserSchema }, { name: Blog.name, schema: BlogSchema }, { name: Posts.name, schema: PostSchema }, { name: RecoveryPassword.name, schema: RecoveryPasswordSchema }, { name: Comments.name, schema: CommentSchema }, { name: LikesCommentsInfo.name, schema: LikesCommentsSchema }, { name: LikesPostInfo.name, schema: LLikesPostInfoSchema }]),
+
     JwtModule.register({
       secret: 'your_secret_key', // Замените на ваш секретный ключ
       signOptions: { expiresIn: '5m' }, // Время жизни токена (например, 1 час)
@@ -60,16 +80,29 @@ const authProviders: Provider[] = [UsersAuthService, EmailAdapter, UsersCreatedR
       ttl: 10000,
       limit: 5,
     }]),
+
     ConfigModule.forRoot({
       isGlobal: true,
       load: [configuration],
       validate: validate
     }),
 
-    CqrsModule
+    CqrsModule,
 
   ],
-  controllers: [UsersController, BlogsController, PostsController, DeleteAllsController, AuthController],
-  providers: [...usersProviders, ...blogsProvides, ...postsProvedis, LoginIsExistContsraint, EmailIsExistContsraint, ...authProviders, JwtAccessStrategy],
+  controllers: [UsersController, BlogsController, PostsController, DeleteAllsController, AuthController, CommentsController],
+  providers: [LoginIsExistContsraint, EmailIsExistContsraint, JwtAccessStrategy, ...usersProviders, ...blogsProvides, ...postsProvedis, ...authProviders, ...useCaseUser, ...commentsProvides, ...useCaseComment, NameIsExistConstraint],
 })
-export class AppModule { }
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(LoggerMiddleware)
+      .forRoutes("*") // То есть данный middleware будет применяться ко всем роутерам данного моделя.
+      .apply(LoggerMiddlewar2)
+      .forRoutes({ // Есть возможность прмиенить цепочку middleware. Также применить конкретный middleware к конкретнму элемнту эндпоинта и методу.
+        path: "blogs",
+        method: RequestMethod.GET
+      })
+
+  }
+
+}

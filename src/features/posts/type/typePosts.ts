@@ -30,6 +30,7 @@ export type extendedLikesInfo = {
 
 
 export type PostViewModelLiKeArray = {
+  id: string,
   title: string;
   shortDescription: string;
   content: string;
@@ -41,7 +42,7 @@ export type PostViewModelLiKeArray = {
 
 
 export type PostViewModelLiKeArrayDB = {
-  _id:string
+  _id: string
   title: string;
   shortDescription: string;
   content: string;
