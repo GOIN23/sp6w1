@@ -5,25 +5,24 @@ export enum Environments {
     DEVELOPMENT = 'DEVELOPMENT',
     STAGING = 'STAGING',
     // 'production' данная переменная не допустима, так как isProduction будет работать не корректно
-    PRODUCTION = 'PRODUCTION',
-    TEST = 'TEST',
+    PRODUCTION = 'PRODUCTION ',
+    TEST = "TEST ",
 }
 export class EnvironmentSettings {
     constructor(private environmentVariables: EnvironmentVariable) { }
     @IsEnum(Environments)
     private ENV = this.environmentVariables.ENV;
     get isProduction() {
-        console.log(this.environmentVariables.DEV, "ENVENVENV")
-        return this.environmentVariables.ENV === Environments.PRODUCTION;
+        return this.ENV === Environments.PRODUCTION;
     }
     get isStaging() {
-        return this.environmentVariables.ENV === Environments.STAGING;
+        return this.ENV === Environments.STAGING;
     }
     get isTesting() {
-        return this.environmentVariables.ENV === Environments.TEST;
+        return this.ENV === Environments.TEST;
     }
     get isDevelopment() {
-        return this.environmentVariables.ENV === Environments.DEVELOPMENT;
+        return this.ENV === Environments.DEVELOPMENT;
     }
     get currentEnv() {
         return this.ENV;

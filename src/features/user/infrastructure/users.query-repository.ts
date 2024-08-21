@@ -3,11 +3,9 @@ import { User, UserDocument } from "../domain/createdBy-user-Admin.entity";
 import { Model, Types } from "mongoose";
 import { InjectModel } from "@nestjs/mongoose";
 import { UserOutputModel, UserOutputModelMapper } from '../models/output/user.output.model';
-import { qureT } from 'src/utilit/TYPE/generalType';
-import { PaginatorUsers, UserViewModel2, UserViewModelConfidential } from 'src/utilit/TYPE/typeUser';
+import { PaginatorUsers, UserViewModel2, UserViewModelConfidential } from "../../../utilit/TYPE/typeUser"
 import { SortDirection } from 'mongodb';
-import { QueryParamsDto } from 'src/utilit/dto/dto.query.user';
-
+import { QueryParamsDto } from "../../../utilit/dto/dto.query.user"
 
 @Injectable()
 export class UsersQueryRepository {
@@ -20,12 +18,24 @@ export class UsersQueryRepository {
     }
 
     async getUsers(query: QueryParamsDto): Promise<PaginatorUsers | { error: string }> {
+        debugger
+        // const searchEmail = query.searchEmailTerm ? { email: { $regex: query.searchEmailTerm, $options: "i" } } : {};
+        // const searchLogin = query.searchLoginTerm ? { login: { $regex: query.searchLoginTerm, $options: "i" } } : {};
+
+        // const filter = {
+        //     $or: [searchEmail, searchLogin],
+        // };
         const filter = {
             $or: [
-                { email: { $regex: query.searchEmailTerm ?? "", $options: "i" } },
-                { login: { $regex: query.searchLoginTerm ?? "", $options: "i" } }
-            ],
+                query.searchEmailTerm ? { email: { $regex: query.searchEmailTerm, $options: "i" } } : null,
+                query.searchLoginTerm ? { login: { $regex: query.searchLoginTerm, $options: "i" } } : null,
+            ].filter(Boolean), // Убираем null значения
         };
+
+        if (filter.$or.length === 0) {
+            //@ts-ignore
+            filter.$or.push({})
+        }
 
 
         try {

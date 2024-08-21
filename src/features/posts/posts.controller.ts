@@ -7,12 +7,12 @@ import { BlogsQueryRepository } from "../blogs/infrastructure/blogs.query-reposi
 import { DefaultValuesPipe } from "../blogs/dto/dto.query.body";
 import { CommentPosts } from "./models/input/create-comments.input.model";
 import { JwtService } from "@nestjs/jwt";
-import { JwtAuthGuard } from "src/utilit/guards/jwt-auth-guards";
+import { JwtAuthGuard } from "../../utilit/guards/jwt-auth-guards"
 import { UsersService } from "../user/application/users.service";
 import { CommentsQueryRepository } from "../comments/infrastructure/comments-query-repository";
 import { PutLikeComment } from "../comments/models/input/put-like-comments.input.mode;";
-import { AuthGuard } from "src/utilit/guards/basic-auth-guards";
-import { LoggingInterceptor } from "src/utilit/interceptors/login-inte";
+import { AuthGuard } from "../../utilit/guards/basic-auth-guards"
+import { LoggingInterceptor } from "../../utilit/interceptors/login-inte"
 
 
 

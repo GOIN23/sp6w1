@@ -5,7 +5,6 @@ import {
   HttpException,
   HttpStatus,
 } from '@nestjs/common';
-import { HttpAdapterHost } from '@nestjs/core';
 import { Request, Response } from 'express';
 
 // https://docs.nestjs.com/exception-filters

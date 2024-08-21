@@ -6,7 +6,7 @@ import { BlogsQueryRepository } from "./infrastructure/blogs.query-repository";
 import { DefaultValuesPipe, QueryBlogsParamsDto } from "./dto/dto.query.body";
 import { PostsQueryRepository } from '../posts/infrastructure/posts.query-repository';
 import { JwtService } from '@nestjs/jwt';
-import { AuthGuard } from 'src/utilit/guards/basic-auth-guards';
+import { AuthGuard } from '../../utilit/guards/basic-auth-guards';
 import { PostsCreateModel } from '../posts/models/input/create-posts.input.bodel';
 import { NumberPipe } from 'src/utilit/pipe/number.pipe';
 // import { PostsCreateModel } from "src/posts/models/input/create-posts.input.bodel";

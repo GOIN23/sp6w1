@@ -1,13 +1,10 @@
 import { Injectable } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
 import { Model } from "mongoose";
-import { postOutputModelMapper, postsOutputModel } from "../models/output/posts.output.model";
-import { SortDirection } from "mongodb";
-import { QueryPostsParamsDto } from "../models/input/query-posts.input";
 import { Comments } from "../domain/comments.entity";
 import { LikesCommentsInfo } from "../domain/likes.entity";
 import { CommentViewModel, CommentViewModelDb, statusCommentLike } from "../type/typeCommen";
-import { Paginator } from "src/utilit/TYPE/generalType";
+import { Paginator } from "../../../utilit/TYPE/generalType"
 
 @Injectable()
 export class CommentsQueryRepository {

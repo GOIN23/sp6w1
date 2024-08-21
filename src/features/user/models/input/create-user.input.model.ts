@@ -1,6 +1,6 @@
 import { IsString, Length, Matches } from "class-validator";
 import { Trim } from "../../../../utilit/decorators/transform/trim";
-import { IsOptionalEmail } from "src/utilit/decorators/validate/is-optional-email";
+import { IsOptionalEmail } from "../../../../utilit/decorators/validate/is-optional-email";
 import { LoginIsExist, LoginIsExistContsraint } from "../../validate/login-is-exist.decorator";
 import { EmailIsExist } from "../../validate/email-is-exist.decorator";
 

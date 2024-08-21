@@ -4,7 +4,7 @@ import * as bcrypt from 'bcrypt';
 import { User } from "../../domain/createdBy-user-Admin.entity";
 import { randomUUID } from "crypto";
 import { add } from "date-fns";
-import { EmailAdapter } from "src/features/auth/application/emai-Adapter";
+import { EmailAdapter } from "../../../auth/application/emai-Adapter";
 
 
 export class CreateUserCommand {

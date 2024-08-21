@@ -1,7 +1,5 @@
-import { CustomException } from '../../../utilit/custom/newCUS';
 import { Body, Controller, Get, HttpCode, HttpException, HttpStatus, Post, Request, Res, UseFilters, UseGuards } from "@nestjs/common";
-import { UserCreateModel } from "src/features/user/models/input/create-user.input.model";
-import { UserOutputModel } from "src/features/user/models/output/user.output.model";
+import { UserCreateModel } from "../../user/models/input/create-user.input.model"
 import { LoginUserCreateModel } from "./models/input/login-user.input.models";
 import { UsersAuthService } from "../application/auth-service";
 import { EmailInputeModel } from "./models/input/email-user.input.models";
@@ -62,7 +60,7 @@ export class AuthController {
 
     }
 
- 
+
 
     @Throttle({ default: { limit: 5, ttl: 10000 } })
     @Post("registration-email-resending")

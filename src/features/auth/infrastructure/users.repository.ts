@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { User } from 'src/features/user/domain/createdBy-user-Admin.entity';
-import { userDb } from 'src/features/user/type/userType';
+import { User } from "../../user/domain/createdBy-user-Admin.entity"
+import { userDb } from '../../user/type/userType';
 import { RecoveryPassword } from '../domain/recovery-password-code';
 
 

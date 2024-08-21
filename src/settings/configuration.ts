@@ -9,6 +9,8 @@ export type EnvironmentVariable = { [key: string]: string };
 export type ConfigurationType = Configuration;
 export type ApiSettingsType = ConfigurationType['apiSettings'];
 export type EnvironmentSettingsType = ConfigurationType['environmentSettings'];
+export type DbSettingsSettingsType = ConfigurationType['dbSettings'];
+
 
 export class Configuration {
     @ValidateNested()
@@ -36,14 +38,14 @@ export class Configuration {
     }
 }
 
-export function validate(environmentVariables: Record<string, string>) {
-    const config = Configuration.createConfig(environmentVariables);
-    const errors = validateSync(config, { skipMissingProperties: false });
-    if (errors.length > 0) {
-        throw new Error(errors.toString());
-    }
-    return config;
-}
+// export function validate(environmentVariables: Record<string, string>) {
+//     const config = Configuration.createConfig(environmentVariables);
+//     const errors = validateSync(config, { skipMissingProperties: false });
+//     if (errors.length > 0) {
+//         throw new Error(errors.toString());
+//     }
+//     return config;
+// }
 
 export default () => {
     const environmentVariables = process.env as EnvironmentVariable;

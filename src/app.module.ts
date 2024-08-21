@@ -27,7 +27,7 @@ import { AuthController } from './features/auth/api/auth.controller';
 import { RecoveryPassword, RecoveryPasswordSchema } from './features/auth/domain/recovery-password-code';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import configuration, { ConfigurationType, validate } from './settings/configuration';
+import configuration, { ConfigurationType, DbSettingsSettingsType, EnvironmentSettingsType } from './settings/configuration';
 import { CqrsModule } from '@nestjs/cqrs';
 import { CreateUserCommand, CreateUserUseCase } from './features/user/application/use-case/create-use-case';
 import { GetUserUseCase } from './features/user/application/use-case/get-use-case';
@@ -64,9 +64,25 @@ const authProviders: Provider[] = [UsersAuthService, EmailAdapter, UsersCreatedR
 @Module({
   imports: [
     MongooseModule.forRootAsync({
-      useFactory: async (configService: ConfigService) => ({
-        uri: configService.get<ConfigurationType>('dbSettings', { infer: true }).MONGO_CONNECTION_URI
-      }),
+      useFactory: async (configService: ConfigService) => {
+        const environmentSettings = configService.get<EnvironmentSettingsType>('environmentSettings', {
+          infer: true,
+        });
+
+        const databaseSettings = configService.get<DbSettingsSettingsType>('dbSettings', {
+          infer: true,
+        });
+
+
+        const uri = environmentSettings.isTesting
+          ? databaseSettings.MONGO_CONNECTION_URI_TEST
+          : databaseSettings.MONGO_CONNECTION_URI;
+
+
+        return {
+          uri: uri,
+        };
+      },
       inject: [ConfigService], // Инъекция ConfigService
     }),
     MongooseModule.forFeature([{ name: User.name, schema: UserSchema }, { name: Blog.name, schema: BlogSchema }, { name: Posts.name, schema: PostSchema }, { name: RecoveryPassword.name, schema: RecoveryPasswordSchema }, { name: Comments.name, schema: CommentSchema }, { name: LikesCommentsInfo.name, schema: LikesCommentsSchema }, { name: LikesPostInfo.name, schema: LLikesPostInfoSchema }]),
@@ -83,8 +99,7 @@ const authProviders: Provider[] = [UsersAuthService, EmailAdapter, UsersCreatedR
 
     ConfigModule.forRoot({
       isGlobal: true,
-      load: [configuration],
-      validate: validate
+      load: [configuration]
     }),
 
     CqrsModule,
@@ -102,7 +117,8 @@ export class AppModule implements NestModule {
         path: "blogs",
         method: RequestMethod.GET
       })
-
   }
 
 }
+
+

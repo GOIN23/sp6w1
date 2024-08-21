@@ -1,14 +1,13 @@
-import { HttpException, HttpStatus, Injectable } from "@nestjs/common";
-import { ObjectId } from "mongodb";
+import { Injectable } from "@nestjs/common";
+
 import { UsersCreatedRepository } from "../infrastructure/users.repository";
 import * as bcrypt from 'bcrypt';
 import { add } from "date-fns";
 import { randomUUID } from "crypto";
 import { EmailAdapter } from "./emai-Adapter";
 import { JwtService } from "@nestjs/jwt";
-import { User } from "src/features/user/domain/createdBy-user-Admin.entity";
-import { UserCreateModel } from "src/features/user/models/input/create-user.input.model";
-import { userDb } from "src/features/user/type/userType";
+import { User } from "../../user/domain/createdBy-user-Admin.entity"
+import { UserCreateModel } from "../../user/models/input/create-user.input.model"
 
 
 // Для провайдера всегда необходимо применять декоратор @Injectable() и регистрировать в модуле

@@ -1,9 +1,9 @@
 import { BadRequestException, INestApplication, ValidationPipe, } from '@nestjs/common';
 import { HttpAdapterHost } from '@nestjs/core';
 import { useContainer } from 'class-validator';
-import { AppModule } from 'src/app.module';
-import { AllExceptionsFilter, HttpErrorFilter, HttpExceptionFilter } from 'src/utilit/exception-filters/http-exception-filter';
-import { LoggingInterceptor } from 'src/utilit/interceptors/login-inte';
+import { AppModule } from '../app.module';
+import { AllExceptionsFilter } from "../utilit/exception-filters/http-exception-filter"
+import { LoggingInterceptor } from "../utilit/interceptors/login-inte"
 
 // Префикс нашего приложения (http://site.com/api)
 const APP_PREFIX = '/api';
@@ -71,5 +71,5 @@ const setAppPipes = (app: INestApplication) => {
 };
 
 const setAppExceptionsFilters = (app: INestApplication) => {
-    app.useGlobalFilters( new AllExceptionsFilter());
+    app.useGlobalFilters(new AllExceptionsFilter());
 };

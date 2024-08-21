@@ -4,8 +4,8 @@ import { UserCreateModel } from "./models/input/create-user.input.model";
 import { UserOutputModel } from "./models/output/user.output.model";
 import { UsersQueryRepository } from "./infrastructure/users.query-repository";
 import { qureT } from "src/utilit/TYPE/generalType";
-import { DefaultValuesPipeUser, QueryParamsDto } from "src/utilit/dto/dto.query.user";
-import { AuthGuard } from "src/utilit/guards/basic-auth-guards";
+import { DefaultValuesPipeUser, QueryParamsDto } from "../../utilit/dto/dto.query.user";
+import { AuthGuard } from "../../utilit/guards/basic-auth-guards";
 import { CommandBus } from "@nestjs/cqrs";
 import { CreateUserCommand } from "./application/use-case/create-use-case";
 

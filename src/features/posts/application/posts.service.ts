@@ -1,13 +1,11 @@
 import { Injectable } from '@nestjs/common';
 
 import { PostsCreateModel } from "../models/input/create-posts.input.bodel";
-import { PostViewModelLiKeArray, statusCommentLike } from "../type/typePosts";
+import { statusCommentLike } from "../type/typePosts";
 import { PostRepository } from "../infrastructure/posts.repository";
-import { BlogOutputModel } from 'src/features/blogs/models/output/blog.output.model';
-import { CommentInputModel, CommentLikeT, CommentViewModel, CommentViewModelDb } from 'src/features/comments/type/typeCommen';
-import { UserViewModel } from 'src/utilit/TYPE/typeUser';
+import { BlogOutputModel } from "../../blogs/models/output/blog.output.model"
+import { CommentLikeT, CommentViewModel, CommentViewModelDb } from "../../comments/type/typeCommen"
 import { ObjectId } from "mongodb"
-// import { BlogOutputModel } from "src/blogs/models/output/blog.output.model";
 
 
 @Injectable()

@@ -2,7 +2,6 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { User, UserDocument } from '../domain/createdBy-user-Admin.entity';
 import { Model } from 'mongoose';
-import { UserOutputModel } from '../models/output/user.output.model';
 
 
 @Injectable()
@@ -13,9 +12,14 @@ export class UsersRepository {
         return result[0]._id.toString();
     }
     async findinDbUser(id: string) {
-        const user = await this.userModel.findById(id, { __v: false })
+        try {
+            const user = await this.userModel.findOne({ _id: id })
+            return user
 
-        return user
+        } catch (error) {
+            return null
+        }
+
     }
     async findIsLogin(login: string) {
         const loginUser = await this.userModel.findOne({ login: login })

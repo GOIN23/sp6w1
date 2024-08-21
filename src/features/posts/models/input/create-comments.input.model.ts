@@ -1,5 +1,5 @@
 import { IsString, Length } from "class-validator";
-import { Trim } from "src/utilit/decorators/transform/trim";
+import { Trim } from "../../../../utilit/decorators/transform/trim";
 
 
 export class CommentPosts {

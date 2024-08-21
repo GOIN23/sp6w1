@@ -1,10 +1,7 @@
 
 
-import { HttpException, HttpStatus, Injectable } from "@nestjs/common";
+import { Injectable } from "@nestjs/common";
 import { UsersRepository } from "../infrastructure/users.repository";
-import { ObjectId } from "mongodb";
-
-import { UserOutputModel } from "../models/output/user.output.model";
 import { Types } from "mongoose";
 import { User } from "../domain/createdBy-user-Admin.entity";
 import { add } from "date-fns";

@@ -1,6 +1,5 @@
-import { IsString, Length, Matches, MaxLength } from "class-validator";
-import { Trim } from "src/utilit/decorators/transform/trim";
-import { IsOptionalEmail } from "src/utilit/decorators/validate/is-optional-email";
+import { IsString, Length } from "class-validator";
+import { Trim } from "../../../../utilit/decorators/transform/trim"
 
 
 export class PutCommentsModel {

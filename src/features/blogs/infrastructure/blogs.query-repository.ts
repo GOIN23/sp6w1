@@ -6,7 +6,7 @@ import { blogOutputModelMapper } from "../models/output/blog.output.model";
 import { QueryBlogsParamsDto } from "../dto/dto.query.body";
 import { BlogViewModelDbT, BlogViewModelT } from "../TYPE/typeBlog";
 import { SortDirection } from "mongodb";
-import { PostViewModelLiKeArrayDB, PostViewModelT } from "src/features/posts/type/typePosts";
+import { PostViewModelLiKeArrayDB, PostViewModelT } from "../../posts/type/typePosts" 
 import { Posts } from "../../posts/domain/posts.entity";
 // import { PostViewModelLiKeArrayDB, PostViewModelT, PostViewModelTdb } from "src/posts/type/typePosts";
 // import { Posts } from "src/posts/domain/posts.entity";

@@ -1,8 +1,7 @@
 import { registerDecorator, ValidationArguments, ValidationOptions, ValidatorConstraint, ValidatorConstraintInterface } from 'class-validator';
 import { Injectable } from '@nestjs/common';
-import { BlogsQueryRepository } from 'src/features/blogs/infrastructure/blogs.query-repository';
 import { InjectModel } from '@nestjs/mongoose';
-import { Blog } from 'src/features/blogs/domain/blog.entity';
+import { Blog } from '../../../features/blogs/domain/blog.entity';
 import { Model } from 'mongoose';
 
 

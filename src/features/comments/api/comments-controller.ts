@@ -1,9 +1,8 @@
-import { Body, Controller, Delete, ForbiddenException, Get, Headers, HttpCode, HttpException, HttpStatus, Param, Post, Put, Query, Request, UseGuards, UsePipes, ValidationPipe } from "@nestjs/common";
-import { PutCommentsModel } from "../models/input/put-comments.input.bodel";
+import { Body, Controller, Delete, ForbiddenException, Get, Headers, HttpCode, HttpException, HttpStatus, Param, Post, Put, Query, Request, UseGuards } from "@nestjs/common";
 import { CommentsQueryRepository } from "../infrastructure/comments-query-repository";
 import { JwtService } from "@nestjs/jwt";
-import { JwtAuthGuard } from "src/utilit/guards/jwt-auth-guards";
-import { CommentPosts } from "src/features/posts/models/input/create-comments.input.model";
+import { JwtAuthGuard } from "../../../utilit/guards/jwt-auth-guards"
+import { CommentPosts } from "../../posts/models/input/create-comments.input.model"
 import { CommandBus } from "@nestjs/cqrs";
 import { UpdateCommentCommand } from "../application/use-case/update-use-case";
 import { DeleteCommentCommand } from "../application/use-case/delete-use-case";
