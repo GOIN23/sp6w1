@@ -27,11 +27,13 @@ export class PostsQueryRepository {
 
 
     async getPosts(query: QueryPostsParamsDto, userId?: string): Promise<any | { error: string }> {
+    
         const search = query.searchNameTerm ? { title: { $regex: query.searchNameTerm, $options: "i" } } : {};
         const filter = {
             ...search,
         };
         try {
+            debugger
             const items: PostViewModelLiKeArrayDB[] = await this.postModel
                 .find({})
                 .sort({ [query.sortBy]: query.sortDirection as SortDirection })
@@ -63,7 +65,7 @@ export class PostsQueryRepository {
     }
 
 
-    private async mapPost(post: PostViewModelTdb, userId?: string): Promise<PostViewModelLiKeArray> {
+    public async mapPost(post: PostViewModelTdb, userId?: string): Promise<PostViewModelLiKeArray> {
 
 
         const dislikesCount = await this.likesPostModule.countDocuments({ postId: post._id, status: "Dislike" });
@@ -120,7 +122,7 @@ export class PostsQueryRepository {
     }
 
 
-    private async mapPosts(items: PostViewModelTdb[], userId?: string): Promise<PostViewModelLiKeArray[]> {
+    public async mapPosts(items: PostViewModelTdb[], userId?: string): Promise<PostViewModelLiKeArray[]> {
         const promises = items.map(async (post: PostViewModelTdb) => {
             const dislikesCount = await this.likesPostModule.countDocuments({ postId: post._id, status: "Dislike" });
             const likesCount = await this.likesPostModule.countDocuments({ postId: post._id, status: "Like" });

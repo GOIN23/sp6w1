@@ -13,6 +13,7 @@ import { CommentsQueryRepository } from "../comments/infrastructure/comments-que
 import { PutLikeComment } from "../comments/models/input/put-like-comments.input.mode;";
 import { AuthGuard } from "../../utilit/guards/basic-auth-guards"
 import { LoggingInterceptor } from "../../utilit/interceptors/login-inte"
+import { JwtAuthGuardPassport } from "src/utilit/strategies/jwt-auth-strategies";
 
 
 
@@ -43,23 +44,19 @@ export class PostsController {
     }
 
     @Post("/:id/comments")
-    @UseGuards(JwtAuthGuard)
+    @UseGuards(JwtAuthGuardPassport)// Это единсвтенное место где я использую passportJwt
     @HttpCode(201)
     async creatComments(@Body() commentPosts: CommentPosts, @Param("id") id: string, @Request() req) {
         const post = await this.postsQueryRepository.getById(id);
-        const user = await this.usersService.findUser(req.user.userId);
 
 
-        if (!user) {
-            throw new UnauthorizedException()
-        }
 
         if (!post) {
             throw new HttpException('User not found', HttpStatus.NOT_FOUND);
 
         }
 
-        const resulComment = await this.postsService.createCommentPost(commentPosts.content, user, post.id);
+        const resulComment = await this.postsService.createCommentPost(commentPosts.content, req.user, post.id);
 
         return resulComment
     }
@@ -108,7 +105,7 @@ export class PostsController {
 
         const userId = payload ? payload.userId : "null"
 
-        const posts = await this.postsQueryRepository.getPosts(qurePagination)
+        const posts = await this.postsQueryRepository.getPosts(qurePagination,userId)
 
         return posts
 
@@ -143,7 +140,6 @@ export class PostsController {
     @UseGuards(JwtAuthGuard)
     @HttpCode(204)
     async putLikeStatusPosts(@Param("id") id: string, @Body() likeStatusModel: PutLikeComment, @Request() req) {
-        debugger
 
         const posts = await this.postsQueryRepository.getById(id)
 

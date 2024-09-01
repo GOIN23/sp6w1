@@ -85,9 +85,18 @@ export class BlogsController {
     @Get("/:id/posts")
     // Использование ValidationPipe
     @HttpCode(200)
-    async getBlogByIdPosts(@Param("id") id: string, @Query(new DefaultValuesPipe()) qurePagination: QueryBlogsParamsDto) {
+    async getBlogByIdPosts(@Param("id") id: string, @Query(new DefaultValuesPipe()) qurePagination: QueryBlogsParamsDto, @Request() req) {
+        let payload
+        try {
+            const res = req.headers.authorization.split(' ')[1]
+            payload = this.jwtService.verify(res)
+        } catch (error) {
+            console.log(error)
+        }
 
-        const blog = await this.blogsQueryRepository.getById(id)
+        const userId = payload ? payload.userId : "null"
+
+        const blog = await this.blogsQueryRepository.getById(id,)
 
 
 
@@ -96,7 +105,7 @@ export class BlogsController {
 
         }
 
-        return await this.blogsQueryRepository.getBlogsPosts(qurePagination, id)
+        return await this.blogsQueryRepository.getBlogsPosts(qurePagination, id, userId)
     }
 
     @Put("/:id")

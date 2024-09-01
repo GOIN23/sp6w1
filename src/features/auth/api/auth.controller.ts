@@ -7,6 +7,7 @@ import { NewPasswordInputeModel } from "./models/input/new-password.models";
 import { AuthGuard } from "@nestjs/passport";
 import { Throttle } from "@nestjs/throttler";
 import { Response } from 'express';
+import { LocalAuthGuard } from "src/utilit/strategies/local-auth-strategies";
 
 
 
@@ -24,16 +25,11 @@ export class AuthController {
     }
 
     @Post("login")
+    @UseGuards(LocalAuthGuard) //Только в этом месте я использовал pasportLocal
     @HttpCode(200)
-    async login(@Body() inputLoginModel: LoginUserCreateModel, @Res() res: Response) {
-        const user = await this.usersService.checkCreadentlais(inputLoginModel.loginOrEmail, inputLoginModel.password);
-        if (!user) {
-            throw new HttpException('User not found', HttpStatus.UNAUTHORIZED);
-        }
+    async login(@Res() res: Response, @Request() req) {
 
-
-
-        const token = await this.usersService.login({ userId: user._id, login: user.login })
+        const token = await this.usersService.login({ userId: req.user._id, login: req.user.login })
 
         res.cookie('refreshToken', token.refreshToken, {
             httpOnly: true, // Доступно только по HTTP(S), недоступно через JavaScript

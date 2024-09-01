@@ -44,6 +44,8 @@ import { LikesPostInfo, LLikesPostInfoSchema } from './features/posts/domain/lik
 import { LoggerMiddlewar2, LoggerMiddleware } from './utilit/middlewares/logger.middleware';
 import { NameIsExistConstraint } from './utilit/decorators/transform/blogFind';
 import { JwtAccessStrategy } from './utilit/strategies/jwt-auth-strategies';
+import { LocalStrategy } from './utilit/strategies/local-auth-strategies';
+import { UserCreatedEventHandler } from './features/user/application/event/kill';
 
 
 
@@ -52,6 +54,7 @@ import { JwtAccessStrategy } from './utilit/strategies/jwt-auth-strategies';
 
 const usersProviders: Provider[] = [UsersRepository, UsersService, UsersQueryRepository]
 const useCaseUser = [CreateUserUseCase, GetUserUseCase]
+const eventUser = [UserCreatedEventHandler]
 
 const blogsProvides: Provider[] = [BlogService, BlogRepository, BlogsQueryRepository]
 const postsProvedis: Provider[] = [PostsService, PostsQueryRepository, PostRepository]
@@ -106,7 +109,7 @@ const authProviders: Provider[] = [UsersAuthService, EmailAdapter, UsersCreatedR
 
   ],
   controllers: [UsersController, BlogsController, PostsController, DeleteAllsController, AuthController, CommentsController],
-  providers: [LoginIsExistContsraint, EmailIsExistContsraint, JwtAccessStrategy, ...usersProviders, ...blogsProvides, ...postsProvedis, ...authProviders, ...useCaseUser, ...commentsProvides, ...useCaseComment, NameIsExistConstraint],
+  providers: [LoginIsExistContsraint, EmailIsExistContsraint, JwtAccessStrategy, ...usersProviders, ...blogsProvides, ...postsProvedis, ...authProviders, ...useCaseUser, ...eventUser, ...commentsProvides, ...useCaseComment, NameIsExistConstraint, LocalStrategy],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {

@@ -42,9 +42,14 @@ export class CreateUserUseCase implements ICommandHandler<CreateUserCommand> {
 
         const userId = await this.usersRepository.creatInDbUser(newUser)
 
-        this.emailAdapter.sendEmail(newUser.emailConfirmation.confirmationCode, newUser.email);
+        try {
+            this.emailAdapter.sendEmail(newUser.emailConfirmation.confirmationCode, newUser.email);
+            return userId
+        } catch (error) {
+            console.log(error)
 
-        return userId
+        }
+
 
     }
 }

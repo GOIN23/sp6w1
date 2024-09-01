@@ -1,5 +1,5 @@
 import { Injectable, UnauthorizedException } from "@nestjs/common";
-import { PassportStrategy } from "@nestjs/passport";
+import { AuthGuard, PassportStrategy } from "@nestjs/passport";
 import { Strategy, ExtractJwt } from "passport-jwt";
 import { UsersAuthService } from "../../features/auth/application/auth-service"
 @Injectable()
@@ -15,19 +15,17 @@ export class JwtAccessStrategy extends PassportStrategy(Strategy) {
     }
 
     async validate(payload: any) {
-        const user = await this.usersAuthService.findUsers(payload.sub); // Предположим, у вас есть метод findById
+        const user = await this.usersAuthService.findUsers(payload.userId); // Предположим, у вас есть метод findById
         if (!user) {
             throw new UnauthorizedException();
         }
 
-        const outputData = {
-            email: user.email,
-            login: user.login,
-            userId: payload.sub
 
-        }
-        return outputData
+        return user
     }
 
 
 }
+
+
+export class JwtAuthGuardPassport extends AuthGuard('jwt') { }

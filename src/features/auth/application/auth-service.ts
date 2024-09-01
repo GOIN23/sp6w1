@@ -31,7 +31,6 @@ export class UsersAuthService {
                 confirmationCode: randomUUID(),
                 expirationDate: add(new Date(), {
                     hours: 1,
-                    minutes: 30,
                 }),
                 isConfirmed: false,
             },
@@ -41,11 +40,9 @@ export class UsersAuthService {
 
         await this.usersRepository.createUsers(newUser);
 
-        try {
-            await this.emailAdapter.sendEmail(newUser.emailConfirmation.confirmationCode, newUser.email);
-        } catch (error) {
-            console.log(error);
-        }
+        this.emailAdapter.sendEmail(newUser.emailConfirmation.confirmationCode, newUser.email);
+
+
 
     }
     async login(user: any) {

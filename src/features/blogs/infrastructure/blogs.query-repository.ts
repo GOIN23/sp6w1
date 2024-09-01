@@ -6,14 +6,15 @@ import { blogOutputModelMapper } from "../models/output/blog.output.model";
 import { QueryBlogsParamsDto } from "../dto/dto.query.body";
 import { BlogViewModelDbT, BlogViewModelT } from "../TYPE/typeBlog";
 import { SortDirection } from "mongodb";
-import { PostViewModelLiKeArrayDB, PostViewModelT } from "../../posts/type/typePosts" 
+import { PostViewModelLiKeArrayDB, PostViewModelT } from "../../posts/type/typePosts"
 import { Posts } from "../../posts/domain/posts.entity";
+import { PostsQueryRepository } from "src/features/posts/infrastructure/posts.query-repository";
 // import { PostViewModelLiKeArrayDB, PostViewModelT, PostViewModelTdb } from "src/posts/type/typePosts";
 // import { Posts } from "src/posts/domain/posts.entity";
 
 @Injectable()
 export class BlogsQueryRepository {
-    constructor(@InjectModel(Blog.name) private blogModel: Model<Blog>, @InjectModel(Posts.name) private postModel: Model<Posts>) {
+    constructor(@InjectModel(Blog.name) private blogModel: Model<Blog>, @InjectModel(Posts.name) private postModel: Model<Posts>, private postsQueryRepository: PostsQueryRepository) {
     }
 
     async getById(blogId: string) {
@@ -64,7 +65,8 @@ export class BlogsQueryRepository {
     }
 
 
-    async getBlogsPosts(query: any, id: string): Promise<any | { error: string }> {
+    async getBlogsPosts(query: any, id: string, userId?: string): Promise<any | { error: string }> {
+        debugger
         const search = query.searchNameTerm ? { name: { $regex: query.searchNameTerm, $options: "i" } } : {};
         const blogId = id;
         const filter = {
@@ -80,23 +82,7 @@ export class BlogsQueryRepository {
 
             const totalCount = await this.postModel.countDocuments(filter);
 
-            const mapPosts: PostViewModelT[] = items.map((post: PostViewModelLiKeArrayDB) => {
-                return {
-                    id: post._id,
-                    blogId: post.blogId,
-                    blogName: post.blogName,
-                    content: post.content,
-                    createdAt: post.createdAt,
-                    shortDescription: post.shortDescription,
-                    title: post.title,
-                    extendedLikesInfo: {
-                        dislikesCount: post.extendedLikesInfo.dislikesCount,
-                        likesCount: post.extendedLikesInfo.likesCount,
-                        myStatus: post.extendedLikesInfo.myStatus,
-                        newestLikes: post.extendedLikesInfo.newestLikes
-                    }
-                };
-            });
+            const mapPosts: any = await this.postsQueryRepository.mapPosts(items, userId)
             return {
                 pagesCount: +Math.ceil(totalCount / query.pageSize),
                 page: +query.pageNumber,

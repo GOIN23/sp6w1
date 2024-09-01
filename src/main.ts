@@ -10,7 +10,6 @@ async function bootstrap() {
   applyAppSettings(app)
   const configService = app.get(ConfigService<ConfigurationType, true>);
   const apiSettings = configService.get('apiSettings', { infer: true });
-
   await app.listen(apiSettings.PORT);
 }
 bootstrap();

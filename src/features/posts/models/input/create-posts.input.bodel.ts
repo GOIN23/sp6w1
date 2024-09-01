@@ -14,6 +14,7 @@ export class PostsCreateModel {
     @IsNotEmpty({ message: 'Login is required' })
     shortDescription: string
 
+    @Trim()
     @MaxLength(1000)
     @IsNotEmpty({ message: 'Login is required' })
     content: string
