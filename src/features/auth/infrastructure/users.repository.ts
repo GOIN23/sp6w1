@@ -4,11 +4,12 @@ import { Model } from 'mongoose';
 import { User } from "../../user/domain/createdBy-user-Admin.entity"
 import { userDb } from '../../user/type/userType';
 import { RecoveryPassword } from '../domain/recovery-password-code';
+import { DeviceSesions } from '../domain/sesion-auth.entity';
 
 
 @Injectable()
 export class UsersCreatedRepository {
-    constructor(@InjectModel(User.name) private userModel: Model<User>, @InjectModel(RecoveryPassword.name) private recoveryPassword: Model<RecoveryPassword>) { }
+    constructor(@InjectModel(User.name) private userModel: Model<User>, @InjectModel(RecoveryPassword.name) private recoveryPassword: Model<RecoveryPassword>, @InjectModel(DeviceSesions.name) private deviceSesions: Model<DeviceSesions>) { }
 
 
     async createUsers(newUser: User): Promise<void> {
@@ -22,6 +23,7 @@ export class UsersCreatedRepository {
         }
         return result;
     }
+
     async findBlogOrEmail(loginOrEmail: string): Promise<userDb | null> {
         const user = await this.userModel.findOne({ $or: [{ login: loginOrEmail }, { email: loginOrEmail }] });
 
@@ -78,5 +80,49 @@ export class UsersCreatedRepository {
 
     async updatePassword(email: string, newPasswordHash: string, newPasswordSalt: string): Promise<void> {
         await this.userModel.updateOne({ email: email }, { $set: { passwordHash: newPasswordHash, passwordSalt: newPasswordSalt } });
+    }
+
+    async addSesionUser(userSession: DeviceSesions) {
+        await this.deviceSesions.insertMany(userSession);
+    }
+
+    async findRottenSessions(userId: string, deviceId: string) {
+        const userSesion = await this.deviceSesions.findOne({
+            userId: userId,
+            deviceId: deviceId,
+        });
+
+        return userSesion;
+    }
+
+    async completelyRemoveSesion(deviceId: string, userId: string) {
+        await this.deviceSesions.deleteOne({ deviceId: deviceId, userId: userId });
+    }
+
+    async updateSesionUser(iat: string, userId: string, diveceId: string) {
+        await this.deviceSesions.updateOne({ userId: userId, deviceId: diveceId }, { $set: { lastActiveDate: iat } });
+    }
+    async getSesions(userId: string) {
+        const sesionsDivece = await this.deviceSesions.find({ userId: userId });
+        const mapDateSesio = sesionsDivece.map((d) => {
+            return {
+                deviceId: d.deviceId,
+                ip: d.ip,
+                lastActiveDate: new Date(+d.lastActiveDate * 1000),
+                title: d.title,
+            };
+        });
+        return mapDateSesio;
+    }
+    async getSesionsId(deviceId: string) {
+        const sesionsDivece = await this.deviceSesions.findOne({ deviceId: deviceId });
+        return sesionsDivece;
+    }
+
+    async deleteSesions(deviceId: string) {
+        await this.deviceSesions.deleteMany({ deviceId: { $ne: deviceId } });
+    }
+    async deleteSesionsId(deviceId: string) {
+        await this.deviceSesions.deleteOne({ deviceId: deviceId });
     }
 }

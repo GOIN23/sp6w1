@@ -8,13 +8,13 @@ import { RecoveryPassword } from "../auth/domain/recovery-password-code";
 import { Comments } from "../comments/domain/comments.entity";
 import { LikesCommentsInfo } from "../comments/domain/likes.entity";
 import { LikesPostInfo } from "../posts/domain/likes-posts.entity";
+import { SkipThrottle } from "@nestjs/throttler";
 
 
 
 
 
-
-
+@SkipThrottle({ default: false })
 @Controller('testing')
 export class DeleteAllsController {
     constructor(@InjectModel(Posts.name) private postModel: Model<Posts>, @InjectModel(Blog.name) private blogModel: Model<Blog>, @InjectModel(User.name) private userModel: Model<User>, @InjectModel(RecoveryPassword.name) private RecoveryPassword: Model<RecoveryPassword>, @InjectModel(Comments.name) private commentsModel: Model<Comments>, @InjectModel(LikesCommentsInfo.name) private likesModule: Model<LikesCommentsInfo>, @InjectModel(LikesPostInfo.name) private likesPostModule: Model<LikesPostInfo>) { }

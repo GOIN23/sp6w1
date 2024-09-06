@@ -5,18 +5,19 @@ import { UsersAuthService } from "../application/auth-service";
 import { EmailInputeModel } from "./models/input/email-user.input.models";
 import { NewPasswordInputeModel } from "./models/input/new-password.models";
 import { AuthGuard } from "@nestjs/passport";
-import { Throttle } from "@nestjs/throttler";
+import { SkipThrottle, Throttle } from "@nestjs/throttler";
 import { Response } from 'express';
 import { LocalAuthGuard } from "src/utilit/strategies/local-auth-strategies";
+import { SesionsService } from "../application/sesions-service";
 
 
 
 @Controller('auth')
 export class AuthController {
-    constructor(protected usersService: UsersAuthService) { }
+    constructor(protected usersService: UsersAuthService, protected sesionsService: SesionsService) { }
 
-    @Throttle({ default: { limit: 5, ttl: 10000 } })
     @Post("registration")
+    
     @HttpCode(204)
     async registerUser(@Body() createModel: UserCreateModel) {
 
@@ -25,11 +26,14 @@ export class AuthController {
     }
 
     @Post("login")
+    
     @UseGuards(LocalAuthGuard) //Только в этом месте я использовал pasportLocal
     @HttpCode(200)
     async login(@Res() res: Response, @Request() req) {
 
-        const token = await this.usersService.login({ userId: req.user._id, login: req.user.login })
+        const userAgent = req.headers["user-agent"] || 'unknown device';
+        const token = await this.usersService.login({ userId: req.user._id, login: req.user.login, userAgent: userAgent, ip: req.ip })
+
 
         res.cookie('refreshToken', token.refreshToken, {
             httpOnly: true, // Доступно только по HTTP(S), недоступно через JavaScript
@@ -40,9 +44,53 @@ export class AuthController {
 
         return res.json({ accessToken: token.accessToken });
     }
+    @Post("logout")
+    @HttpCode(204)
+    async logout(@Request() req) {
+        debugger
 
-    @Throttle({ default: { limit: 5, ttl: 10000 } })
+        const result = await this.usersService.checkRefreshToken(req.cookies.refreshToken)
+
+
+        if (!result) {
+            throw new HttpException("UNAUTHORIZED", HttpStatus.UNAUTHORIZED)
+        }
+
+        await this.sesionsService.completelyRemoveSesion(result);
+
+    }
+
+    @Post("refresh-token")
+    
+    @HttpCode(200)
+    async refreshToken(@Res() res: Response, @Request() req) {
+
+        const result = await this.usersService.checkRefreshToken(req.cookies.refreshToken)
+
+
+        if (!result) {
+            throw new HttpException("UNAUTHORIZED", HttpStatus.UNAUTHORIZED)
+        }
+
+        const userAgent = req.headers["user-agent"];
+
+        const tokens = await this.usersService.updateToken(result, req.ip, userAgent);
+
+
+        res.cookie('refreshToken', tokens.refreshToken, {
+            httpOnly: true, // Доступно только по HTTP(S), недоступно через JavaScript
+            secure: true, // Установите в true, если используете HTTPS
+            sameSite: 'strict', // Защищает от CSRF
+            maxAge: 30 * 24 * 60 * 60 * 1000, // Пример: 30 дней
+        });
+
+        return res.json({ accessToken: tokens.accessToken });
+
+    }
+
+
     @Post("registration-confirmation")
+    
     @HttpCode(204)
     async registrationConfirmation(@Body("code") code: string) {
         const user = await this.usersService.confirmEmail(code);
@@ -57,8 +105,7 @@ export class AuthController {
     }
 
 
-
-    @Throttle({ default: { limit: 5, ttl: 10000 } })
+    
     @Post("registration-email-resending")
     @HttpCode(204)
     async registrationEmailResending(@Body("email") email: string) {
@@ -75,7 +122,7 @@ export class AuthController {
 
     }
 
-    @Throttle({ default: { limit: 5, ttl: 10000 } })
+    
     @Post("password-recovery")
     @HttpCode(204)
     async passwordRecovery(@Body() emailRes: EmailInputeModel) {
@@ -83,7 +130,7 @@ export class AuthController {
         await this.usersService.passwordRecovery(email)
     }
 
-    @Throttle({ default: { limit: 5, ttl: 10000 } })
+    
     @Post("new-password")
     @HttpCode(204)
     async newPassword(@Body() inputNewData: NewPasswordInputeModel) {
@@ -94,12 +141,12 @@ export class AuthController {
 
         }
     }
-
+    
+    @SkipThrottle({ default: false })
     @Get("me")
     @UseGuards(AuthGuard('jwt'))
     @HttpCode(200)
     async me(@Request() req) {
-
         return req.user
     }
 

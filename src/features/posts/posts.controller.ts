@@ -14,6 +14,7 @@ import { PutLikeComment } from "../comments/models/input/put-like-comments.input
 import { AuthGuard } from "../../utilit/guards/basic-auth-guards"
 import { LoggingInterceptor } from "../../utilit/interceptors/login-inte"
 import { JwtAuthGuardPassport } from "src/utilit/strategies/jwt-auth-strategies";
+import { RefreshGuard } from "src/utilit/guards/refresh-auth-guard";
 
 
 
@@ -44,7 +45,7 @@ export class PostsController {
     }
 
     @Post("/:id/comments")
-    @UseGuards(JwtAuthGuardPassport)// Это единсвтенное место где я использую passportJwt
+    @UseGuards(JwtAuthGuardPassport, RefreshGuard)// Это единсвтенное место где я использую passportJwt
     @HttpCode(201)
     async creatComments(@Body() commentPosts: CommentPosts, @Param("id") id: string, @Request() req) {
         const post = await this.postsQueryRepository.getById(id);
@@ -105,7 +106,7 @@ export class PostsController {
 
         const userId = payload ? payload.userId : "null"
 
-        const posts = await this.postsQueryRepository.getPosts(qurePagination,userId)
+        const posts = await this.postsQueryRepository.getPosts(qurePagination, userId)
 
         return posts
 
@@ -137,7 +138,7 @@ export class PostsController {
     }
 
     @Put("/:id/like-status")
-    @UseGuards(JwtAuthGuard)
+    @UseGuards(JwtAuthGuard, RefreshGuard)
     @HttpCode(204)
     async putLikeStatusPosts(@Param("id") id: string, @Body() likeStatusModel: PutLikeComment, @Request() req) {
 
@@ -154,7 +155,7 @@ export class PostsController {
 
 
     @Put("/:id")
-    @UseGuards(AuthGuard)
+    @UseGuards(AuthGuard, RefreshGuard)
     @HttpCode(204)
     async putPostById(@Param("id") id: string, @Body() postsModel: PostsCreateModel) {
 
@@ -176,7 +177,7 @@ export class PostsController {
     }
 
     @Delete("/:id")
-    @UseGuards(AuthGuard)
+    @UseGuards(AuthGuard, RefreshGuard)
     @HttpCode(204)
     async deletePostById(@Param("id") id: string,) {
 

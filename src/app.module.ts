@@ -1,3 +1,4 @@
+import { Schema } from '@nestjs/mongoose';
 
 import { MiddlewareConsumer, Module, NestModule, Provider, RequestMethod } from '@nestjs/common';
 import { LoginIsExistContsraint } from './features/user/validate/login-is-exist.decorator';
@@ -25,7 +26,7 @@ import { EmailAdapter } from './features/auth/application/emai-Adapter';
 import { UsersCreatedRepository } from './features/auth/infrastructure/users.repository';
 import { AuthController } from './features/auth/api/auth.controller';
 import { RecoveryPassword, RecoveryPasswordSchema } from './features/auth/domain/recovery-password-code';
-import { ThrottlerModule } from '@nestjs/throttler';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import configuration, { ConfigurationType, DbSettingsSettingsType, EnvironmentSettingsType } from './settings/configuration';
 import { CqrsModule } from '@nestjs/cqrs';
@@ -46,6 +47,10 @@ import { NameIsExistConstraint } from './utilit/decorators/transform/blogFind';
 import { JwtAccessStrategy } from './utilit/strategies/jwt-auth-strategies';
 import { LocalStrategy } from './utilit/strategies/local-auth-strategies';
 import { UserCreatedEventHandler } from './features/user/application/event/kill';
+import { DeviceSesions, DeviceSesionsSchema } from './features/auth/domain/sesion-auth.entity';
+import { SecuritySesionsController } from './features/SecurityDevices/api/devices.controller';
+import { SesionsService } from './features/auth/application/sesions-service';
+import { APP_GUARD } from '@nestjs/core';
 
 
 
@@ -61,7 +66,7 @@ const postsProvedis: Provider[] = [PostsService, PostsQueryRepository, PostRepos
 
 const commentsProvides: Provider[] = [CommentsService, CommentsQueryRepository, CommentsRepository]
 const useCaseComment: Provider[] = [DeleteeCommentrUseCase, updateCommentUseCase, UpdateLikeDislikeOnCommentUseCase]
-const authProviders: Provider[] = [UsersAuthService, EmailAdapter, UsersCreatedRepository]
+const authProviders: Provider[] = [UsersAuthService, EmailAdapter, UsersCreatedRepository, SesionsService]
 
 
 @Module({
@@ -88,11 +93,11 @@ const authProviders: Provider[] = [UsersAuthService, EmailAdapter, UsersCreatedR
       },
       inject: [ConfigService], // Инъекция ConfigService
     }),
-    MongooseModule.forFeature([{ name: User.name, schema: UserSchema }, { name: Blog.name, schema: BlogSchema }, { name: Posts.name, schema: PostSchema }, { name: RecoveryPassword.name, schema: RecoveryPasswordSchema }, { name: Comments.name, schema: CommentSchema }, { name: LikesCommentsInfo.name, schema: LikesCommentsSchema }, { name: LikesPostInfo.name, schema: LLikesPostInfoSchema }]),
+    MongooseModule.forFeature([{ name: User.name, schema: UserSchema }, { name: Blog.name, schema: BlogSchema }, { name: Posts.name, schema: PostSchema }, { name: RecoveryPassword.name, schema: RecoveryPasswordSchema }, { name: Comments.name, schema: CommentSchema }, { name: LikesCommentsInfo.name, schema: LikesCommentsSchema }, { name: LikesPostInfo.name, schema: LLikesPostInfoSchema }, { name: DeviceSesions.name, schema: DeviceSesionsSchema }]),
 
     JwtModule.register({
       secret: 'your_secret_key', // Замените на ваш секретный ключ
-      signOptions: { expiresIn: '5m' }, // Время жизни токена (например, 1 час)
+      signOptions: { expiresIn: '10s' }, // Время жизни токена (например, 1 час)
     }),
 
     ThrottlerModule.forRoot([{
@@ -108,8 +113,12 @@ const authProviders: Provider[] = [UsersAuthService, EmailAdapter, UsersCreatedR
     CqrsModule,
 
   ],
-  controllers: [UsersController, BlogsController, PostsController, DeleteAllsController, AuthController, CommentsController],
-  providers: [LoginIsExistContsraint, EmailIsExistContsraint, JwtAccessStrategy, ...usersProviders, ...blogsProvides, ...postsProvedis, ...authProviders, ...useCaseUser, ...eventUser, ...commentsProvides, ...useCaseComment, NameIsExistConstraint, LocalStrategy],
+  controllers: [UsersController, BlogsController, PostsController, DeleteAllsController, AuthController, CommentsController, SecuritySesionsController],
+  providers: [LoginIsExistContsraint, EmailIsExistContsraint, JwtAccessStrategy, ...usersProviders, ...blogsProvides, ...postsProvedis, ...authProviders, ...useCaseUser, ...eventUser, ...commentsProvides, ...useCaseComment, NameIsExistConstraint, LocalStrategy,{
+    provide: APP_GUARD,
+    useClass: ThrottlerGuard
+  }
+  ],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {

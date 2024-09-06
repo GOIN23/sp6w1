@@ -1,5 +1,5 @@
 import { Injectable } from "@nestjs/common";
-
+import { ObjectId } from "mongodb";
 import { UsersCreatedRepository } from "../infrastructure/users.repository";
 import * as bcrypt from 'bcrypt';
 import { add } from "date-fns";
@@ -8,12 +8,15 @@ import { EmailAdapter } from "./emai-Adapter";
 import { JwtService } from "@nestjs/jwt";
 import { User } from "../../user/domain/createdBy-user-Admin.entity"
 import { UserCreateModel } from "../../user/models/input/create-user.input.model"
+import { SesionsService } from "./sesions-service";
+import { DeviceSesions } from "../domain/sesion-auth.entity";
+
 
 
 // Для провайдера всегда необходимо применять декоратор @Injectable() и регистрировать в модуле
 @Injectable()
 export class UsersAuthService {
-    constructor(private usersRepository: UsersCreatedRepository, protected emailAdapter: EmailAdapter, protected jwtService: JwtService) { }
+    constructor(private usersRepository: UsersCreatedRepository, protected emailAdapter: EmailAdapter, protected jwtService: JwtService, protected sesionsService: SesionsService) { }
 
     async creatUser(userData: UserCreateModel): Promise<void> {
         const passwordSalt = await bcrypt.genSalt(10);
@@ -46,12 +49,22 @@ export class UsersAuthService {
 
     }
     async login(user: any) {
-        const payload = { userLogin: user.login, userId: user.userId };
+        const deviceId: string = new ObjectId().toString()
+        const payload = { userLogin: user.login, userId: user.userId, deviceId: deviceId };
+        const tokens = { accessToken: this.jwtService.sign(payload), refreshToken: this.jwtService.sign(payload, { expiresIn: "20s" }) }
 
-        return {
-            accessToken: this.jwtService.sign(payload),
-            refreshToken: this.jwtService.sign(payload, { expiresIn: "24h" })
+        const userSession: DeviceSesions = {
+            userId: user.userId,
+            deviceId: deviceId,
+            lastActiveDate: this.jwtService.decode(tokens.refreshToken).iat,
+            ip: user.ip,
+            title: user.userAgent,
         };
+
+        await this.sesionsService.creatSesion(userSession)
+
+
+        return tokens
     }
     async checkCreadentlais(loginOrEmail: string, password: string) {
         const user = await this.usersRepository.findBlogOrEmail(loginOrEmail);
@@ -133,4 +146,35 @@ export class UsersAuthService {
 
         return res;
     }
+    async checkRefreshToken(refreshToken: string) {
+        try {
+            const result: any = await this.jwtService.verify(refreshToken);
+            const checkSesionshToken = await this.usersRepository.findRottenSessions(result.userId, result.deviceId);
+
+
+            if (!checkSesionshToken) {
+                return null;
+            }
+            if (result.iat < checkSesionshToken!.lastActiveDate) {
+                return null;
+            }
+
+            return await this.jwtService.decode(refreshToken);
+        } catch (error) {
+            return null;
+        }
+    }
+    async updateToken(payload: any, ip: string | undefined, title: string | undefined) {
+
+        const body = { userLogin: payload.userLogin, userId: payload.userId, deviceId: payload.deviceId };
+
+        const tokens = { accessToken: this.jwtService.sign(body), refreshToken: this.jwtService.sign(body, { expiresIn: "20s" }) }
+
+
+        await this.sesionsService.updateSesion(this.jwtService.decode(tokens.refreshToken).iat, payload.userId, payload.deviceId);
+
+        return tokens
+
+    }
+
 }
