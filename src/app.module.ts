@@ -1,76 +1,43 @@
-import { Schema } from '@nestjs/mongoose';
+import { Global, MiddlewareConsumer, Module, NestModule, RequestMethod } from '@nestjs/common';
 
-import { MiddlewareConsumer, Module, NestModule, Provider, RequestMethod } from '@nestjs/common';
-import { LoginIsExistContsraint } from './features/user/validate/login-is-exist.decorator';
-import { UsersRepository } from './features/user/infrastructure/users.repository';
-import { UsersService } from './features/user/application/users.service';
-import { UsersQueryRepository } from './features/user/infrastructure/users.query-repository';
-import { BlogRepository } from './features/blogs/infrastructure/blogs.repository';
-import { BlogsQueryRepository } from './features/blogs/infrastructure/blogs.query-repository';
-import { PostsQueryRepository } from './features/posts/infrastructure/posts.query-repository';
-import { PostsService } from './features/posts/application/posts.service';
-import { BlogService } from './features/blogs/application/blog.service';
 import { User, UserSchema } from './features/user/domain/createdBy-user-Admin.entity';
-import { Blog, BlogSchema } from './features/blogs/domain/blog.entity';
-import { Posts, PostSchema } from './features/posts/domain/posts.entity';
+
 import { MongooseModule } from '@nestjs/mongoose';
-import { UsersController } from './features/user/user.controller';
-import { BlogsController } from './features/blogs/blog.controller';
-import { PostsController } from './features/posts/posts.controller';
-import { DeleteAllsController } from './features/testing-all-data/testing-all-data';
-import { PostRepository } from './features/posts/infrastructure/posts.repository';
-import { EmailIsExistContsraint } from './features/user/validate/email-is-exist.decorator';
+
 import { JwtModule } from '@nestjs/jwt';
-import { UsersAuthService } from './features/auth/application/auth-service';
-import { EmailAdapter } from './features/auth/application/emai-Adapter';
-import { UsersCreatedRepository } from './features/auth/infrastructure/users.repository';
-import { AuthController } from './features/auth/api/auth.controller';
+
 import { RecoveryPassword, RecoveryPasswordSchema } from './features/auth/domain/recovery-password-code';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import configuration, { ConfigurationType, DbSettingsSettingsType, EnvironmentSettingsType } from './settings/configuration';
+import configuration, { ApiSettingsType, DbSettingsSettingsType, EnvironmentSettingsType } from './settings/configuration';
 import { CqrsModule } from '@nestjs/cqrs';
-import { CreateUserCommand, CreateUserUseCase } from './features/user/application/use-case/create-use-case';
-import { GetUserUseCase } from './features/user/application/use-case/get-use-case';
-import { CommentsController } from './features/comments/api/comments-controller';
-import { DeleteeCommentrUseCase } from './features/comments/application/use-case/delete-use-case';
-import { UpdateLikeDislikeOnCommentUseCase } from './features/comments/application/use-case/updateLileOnComment-use-case';
-import { CommentsService } from './features/comments/application/commets.service';
-import { CommentsQueryRepository } from './features/comments/infrastructure/comments-query-repository';
-import { CommentsRepository } from './features/comments/infrastructure/comments-repository';
-import { updateCommentUseCase } from './features/comments/application/use-case/update-use-case';
-import { Comments, CommentSchema } from './features/comments/domain/comments.entity';
-import { LikesCommentsInfo, LikesCommentsSchema } from './features/comments/domain/likes.entity';
-import { LikesPostInfo, LLikesPostInfoSchema } from './features/posts/domain/likes-posts.entity';
+
+import { Comments, CommentSchema } from './features/content/comments/domain/comments.entity';
 import { LoggerMiddlewar2, LoggerMiddleware } from './utilit/middlewares/logger.middleware';
-import { NameIsExistConstraint } from './utilit/decorators/transform/blogFind';
-import { JwtAccessStrategy } from './utilit/strategies/jwt-auth-strategies';
-import { LocalStrategy } from './utilit/strategies/local-auth-strategies';
-import { UserCreatedEventHandler } from './features/user/application/event/kill';
-import { DeviceSesions, DeviceSesionsSchema } from './features/auth/domain/sesion-auth.entity';
-import { SecuritySesionsController } from './features/SecurityDevices/api/devices.controller';
-import { SesionsService } from './features/auth/application/sesions-service';
+
+
 import { APP_GUARD } from '@nestjs/core';
+import { AuthModule } from './features/auth/auth.module';
 
-
-
-
-
-
-const usersProviders: Provider[] = [UsersRepository, UsersService, UsersQueryRepository]
-const useCaseUser = [CreateUserUseCase, GetUserUseCase]
-const eventUser = [UserCreatedEventHandler]
-
-const blogsProvides: Provider[] = [BlogService, BlogRepository, BlogsQueryRepository]
-const postsProvedis: Provider[] = [PostsService, PostsQueryRepository, PostRepository]
-
-const commentsProvides: Provider[] = [CommentsService, CommentsQueryRepository, CommentsRepository]
-const useCaseComment: Provider[] = [DeleteeCommentrUseCase, updateCommentUseCase, UpdateLikeDislikeOnCommentUseCase]
-const authProviders: Provider[] = [UsersAuthService, EmailAdapter, UsersCreatedRepository, SesionsService]
+import { UserModule } from './features/user/user.module';
+import { ContentModule } from './features/content/content.moudle';
+import { UtilitModule } from './utilit/utitli.module';
+import { CoreModule } from './utilit/core.modu';
+import { TypeOrmModule } from '@nestjs/typeorm';
 
 
 @Module({
   imports: [
+    TypeOrmModule.forRoot({
+      type: 'postgres',
+      host: 'localhost',
+      port: 5432,
+      username: 'postgres',
+      password: '1234',
+      database: 'northwind',
+      autoLoadEntities: false,
+      synchronize: false,
+    }),
     MongooseModule.forRootAsync({
       useFactory: async (configService: ConfigService) => {
         const environmentSettings = configService.get<EnvironmentSettingsType>('environmentSettings', {
@@ -93,32 +60,28 @@ const authProviders: Provider[] = [UsersAuthService, EmailAdapter, UsersCreatedR
       },
       inject: [ConfigService], // Инъекция ConfigService
     }),
-    MongooseModule.forFeature([{ name: User.name, schema: UserSchema }, { name: Blog.name, schema: BlogSchema }, { name: Posts.name, schema: PostSchema }, { name: RecoveryPassword.name, schema: RecoveryPasswordSchema }, { name: Comments.name, schema: CommentSchema }, { name: LikesCommentsInfo.name, schema: LikesCommentsSchema }, { name: LikesPostInfo.name, schema: LLikesPostInfoSchema }, { name: DeviceSesions.name, schema: DeviceSesionsSchema }]),
-
-    JwtModule.register({
-      secret: 'your_secret_key', // Замените на ваш секретный ключ
-      signOptions: { expiresIn: '10s' }, // Время жизни токена (например, 1 час)
+    
+    ConfigModule.forRoot({
+      isGlobal: true,
+      load: [configuration]
     }),
+
+    CoreModule,
 
     ThrottlerModule.forRoot([{
       ttl: 10000,
       limit: 5,
     }]),
 
-    ConfigModule.forRoot({
-      isGlobal: true,
-      load: [configuration]
-    }),
-
-    CqrsModule,
-
+    AuthModule,
+    UserModule,
+    ContentModule,
+    UtilitModule
   ],
-  controllers: [UsersController, BlogsController, PostsController, DeleteAllsController, AuthController, CommentsController, SecuritySesionsController],
-  providers: [LoginIsExistContsraint, EmailIsExistContsraint, JwtAccessStrategy, ...usersProviders, ...blogsProvides, ...postsProvedis, ...authProviders, ...useCaseUser, ...eventUser, ...commentsProvides, ...useCaseComment, NameIsExistConstraint, LocalStrategy,{
+  providers: [{
     provide: APP_GUARD,
     useClass: ThrottlerGuard
-  }
-  ],
+  }],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {

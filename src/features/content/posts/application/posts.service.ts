@@ -3,9 +3,9 @@ import { Injectable } from '@nestjs/common';
 import { PostsCreateModel } from "../models/input/create-posts.input.bodel";
 import { statusCommentLike } from "../type/typePosts";
 import { PostRepository } from "../infrastructure/posts.repository";
-import { BlogOutputModel } from "../../blogs/models/output/blog.output.model"
-import { CommentLikeT, CommentViewModel, CommentViewModelDb } from "../../comments/type/typeCommen"
 import { ObjectId } from "mongodb"
+import { BlogOutputModel } from '../../blogs/models/output/blog.output.model';
+import { CommentLikeT, CommentViewModel, CommentViewModelDb } from '../../comments/type/typeCommen';
 
 
 @Injectable()

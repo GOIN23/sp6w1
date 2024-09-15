@@ -4,7 +4,7 @@ import { Model } from "mongoose";
 import { Comments } from "../domain/comments.entity";
 import { LikesCommentsInfo } from "../domain/likes.entity";
 import { CommentViewModel, CommentViewModelDb, statusCommentLike } from "../type/typeCommen";
-import { Paginator } from "../../../utilit/TYPE/generalType"
+import { Paginator } from "../../../../utilit/TYPE/generalType"
 
 @Injectable()
 export class CommentsQueryRepository {

@@ -1,14 +1,14 @@
 import { Controller, Delete, HttpCode } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
 import { Model } from "mongoose";
-import { Posts } from "../posts/domain/posts.entity";
-import { User } from "../user/domain/createdBy-user-Admin.entity";
-import { Blog } from "../blogs/domain/blog.entity";
 import { RecoveryPassword } from "../auth/domain/recovery-password-code";
-import { Comments } from "../comments/domain/comments.entity";
-import { LikesCommentsInfo } from "../comments/domain/likes.entity";
-import { LikesPostInfo } from "../posts/domain/likes-posts.entity";
+import { Comments } from "../content/comments/domain/comments.entity";
+import { LikesCommentsInfo } from "../content/comments/domain/likes.entity";
 import { SkipThrottle } from "@nestjs/throttler";
+import { Posts } from "../content/posts/domain/posts.entity";
+import { User } from "../user/domain/createdBy-user-Admin.entity";
+import { Blog } from "../content/blogs/domain/blog.entity";
+import { LikesPostInfo } from "../content/posts/domain/likes-posts.entity";
 
 
 

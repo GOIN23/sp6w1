@@ -32,6 +32,7 @@ export class Configuration {
             apiSettings: new ApiSettings(environmentVariables),
             dbSettings: new DbSettings(environmentVariables),
             environmentSettings: new EnvironmentSettings(environmentVariables),
+            
 
             // Другие настройки...
         });

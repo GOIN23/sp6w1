@@ -9,13 +9,15 @@ import { AuthGuard } from "../../utilit/guards/basic-auth-guards";
 import { CommandBus, EventBus } from "@nestjs/cqrs";
 import { CreateUserCommand } from "./application/use-case/create-use-case";
 import { UserCreatedEvent } from "./application/event/kill";
+import { DataSource } from "typeorm";
+import { InjectDataSource } from "@nestjs/typeorm";
 
-
+// @InjectDataSource() protected dataSource: DataSource
 
 @Controller('users')
 @UseGuards(AuthGuard)
 export class UsersController {
-    constructor(protected usersService: UsersService, protected usersQueryRepository: UsersQueryRepository, private commandBuse: CommandBus, private eventBus: EventBus) { }
+    constructor(protected usersService: UsersService, protected usersQueryRepository: UsersQueryRepository, private commandBuse: CommandBus, private eventBus: EventBus, protected dataSource: DataSource) { }
 
     @Post()
     @HttpCode(201)
@@ -50,6 +52,19 @@ export class UsersController {
         await this.usersService.deletUser(id)
     }
 
+
+    @Get("test")
+    async testPost() {
+
+        return this.dataSource.query(
+            `
+        SELECT order_id, order_date, last_name
+FROM orders
+LEFT JOIN employees ON orders.employee_id = employees.employee_id
+LIMIT 5
+            `
+        )
+    }
 }
 
 

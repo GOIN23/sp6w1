@@ -26,7 +26,6 @@ export class AuthController {
     }
 
     @Post("login")
-    
     @UseGuards(LocalAuthGuard) //Только в этом месте я использовал pasportLocal
     @HttpCode(200)
     async login(@Res() res: Response, @Request() req) {
@@ -61,7 +60,6 @@ export class AuthController {
     }
 
     @Post("refresh-token")
-    
     @HttpCode(200)
     async refreshToken(@Res() res: Response, @Request() req) {
 
@@ -89,8 +87,7 @@ export class AuthController {
     }
 
 
-    @Post("registration-confirmation")
-    
+    @Post("registration-confirmation")    
     @HttpCode(204)
     async registrationConfirmation(@Body("code") code: string) {
         const user = await this.usersService.confirmEmail(code);

@@ -7,10 +7,9 @@ import { QueryBlogsParamsDto } from "../dto/dto.query.body";
 import { BlogViewModelDbT, BlogViewModelT } from "../TYPE/typeBlog";
 import { SortDirection } from "mongodb";
 import { PostViewModelLiKeArrayDB, PostViewModelT } from "../../posts/type/typePosts"
+import { PostsQueryRepository } from "../../posts/infrastructure/posts.query-repository";
 import { Posts } from "../../posts/domain/posts.entity";
-import { PostsQueryRepository } from "src/features/posts/infrastructure/posts.query-repository";
-// import { PostViewModelLiKeArrayDB, PostViewModelT, PostViewModelTdb } from "src/posts/type/typePosts";
-// import { Posts } from "src/posts/domain/posts.entity";
+
 
 @Injectable()
 export class BlogsQueryRepository {

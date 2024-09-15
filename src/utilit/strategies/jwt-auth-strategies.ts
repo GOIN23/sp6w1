@@ -3,8 +3,8 @@ import { AuthGuard, PassportStrategy } from "@nestjs/passport";
 import { Strategy, ExtractJwt } from "passport-jwt";
 import { UsersAuthService } from "../../features/auth/application/auth-service"
 import { use } from "passport";
-@Injectable()
 
+@Injectable()
 export class JwtAccessStrategy extends PassportStrategy(Strategy) {
     constructor(protected usersAuthService: UsersAuthService) {
         super({
