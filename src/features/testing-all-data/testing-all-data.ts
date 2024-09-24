@@ -9,6 +9,7 @@ import { Posts } from "../content/posts/domain/posts.entity";
 import { User } from "../user/domain/createdBy-user-Admin.entity";
 import { Blog } from "../content/blogs/domain/blog.entity";
 import { LikesPostInfo } from "../content/posts/domain/likes-posts.entity";
+import { DataSource } from "typeorm";
 
 
 
@@ -17,19 +18,28 @@ import { LikesPostInfo } from "../content/posts/domain/likes-posts.entity";
 @SkipThrottle({ default: false })
 @Controller('testing')
 export class DeleteAllsController {
-    constructor(@InjectModel(Posts.name) private postModel: Model<Posts>, @InjectModel(Blog.name) private blogModel: Model<Blog>, @InjectModel(User.name) private userModel: Model<User>, @InjectModel(RecoveryPassword.name) private RecoveryPassword: Model<RecoveryPassword>, @InjectModel(Comments.name) private commentsModel: Model<Comments>, @InjectModel(LikesCommentsInfo.name) private likesModule: Model<LikesCommentsInfo>, @InjectModel(LikesPostInfo.name) private likesPostModule: Model<LikesPostInfo>) { }
+    constructor(protected dataSource: DataSource) { }
 
     @Delete("all-data")
     @HttpCode(204)
     async delete() {
-        await this.postModel.deleteMany()
-        await this.blogModel.deleteMany()
-        await this.userModel.deleteMany()
-        await this.RecoveryPassword.deleteMany()
-        await this.commentsModel.deleteMany()
-        await this.likesModule.deleteMany()
-        await this.likesPostModule.deleteMany()
+        const queryuDeleteMany = `
+        TRUNCATE TABLE users RESTART IDENTITY CASCADE;
+        TRUNCATE TABLE email_confirmation RESTART IDENTITY CASCADE;
+        TRUNCATE TABLE device_sesions RESTART IDENTITY CASCADE;
+        TRUNCATE TABLE recovery_password RESTART IDENTITY CASCADE; 
+  `
+
+        await this.dataSource.query(queryuDeleteMany)
+
+
 
     }
 
 }
+
+
+//    DELETE FROM email_confirmation;
+// DELETE FROM device_sesions;
+// DELETE FROM recovery_password;  
+// DELETE FROM users;

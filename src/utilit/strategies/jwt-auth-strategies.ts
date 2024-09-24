@@ -16,6 +16,7 @@ export class JwtAccessStrategy extends PassportStrategy(Strategy) {
     }
 
     async validate(payload: any) {
+        debugger
         const user = await this.usersAuthService.findUsers(payload.userId); // Предположим, у вас есть метод findById
         if (!user) {
             throw new UnauthorizedException();
@@ -25,7 +26,7 @@ export class JwtAccessStrategy extends PassportStrategy(Strategy) {
         return {
             email: user.email,
             login: user.login,
-            userId: user._id
+            userId: `${user.user_id}`
         }
     }
 

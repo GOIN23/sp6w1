@@ -12,7 +12,7 @@ export class SecuritySesionsController {
 
     @Get("devices")
     @HttpCode(200)
-    async getDevices(@Request() req,) {
+    async getDevices(@Request() req) {
 
         const result = await this.usersAuthService.checkRefreshToken(req.cookies.refreshToken)
 
@@ -37,7 +37,7 @@ export class SecuritySesionsController {
             throw new HttpException("UNAUTHORIZED", HttpStatus.UNAUTHORIZED)
 
         }
-        await this.sesionsService.deleteSesions(result);
+        await this.sesionsService.deleteSesions(result,);
 
     }
 

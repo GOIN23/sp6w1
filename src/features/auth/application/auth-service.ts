@@ -10,13 +10,15 @@ import { User } from "../../user/domain/createdBy-user-Admin.entity"
 import { UserCreateModel } from "../../user/models/input/create-user.input.model"
 import { SesionsService } from "./sesions-service";
 import { DeviceSesions } from "../domain/sesion-auth.entity";
+import { UsersSqlRepository } from "src/features/user/infrastructure/users.sql.repository";
+import { UsersAuthSqlRepository } from "../infrastructure/auth.sql.repository";
 
 
 
 // Для провайдера всегда необходимо применять декоратор @Injectable() и регистрировать в модуле
 @Injectable()
 export class UsersAuthService {
-    constructor(private usersRepository: UsersCreatedRepository, protected emailAdapter: EmailAdapter, protected jwtService: JwtService, protected sesionsService: SesionsService) { }
+    constructor(private usersRepository: UsersCreatedRepository, protected emailAdapter: EmailAdapter, protected jwtService: JwtService, protected sesionsService: SesionsService, protected usersSqlRepository: UsersSqlRepository, protected usersAuthSqlRepository: UsersAuthSqlRepository) { }
 
     async creatUser(userData: UserCreateModel): Promise<void> {
         const passwordSalt = await bcrypt.genSalt(10);
@@ -41,7 +43,7 @@ export class UsersAuthService {
 
 
 
-        await this.usersRepository.createUsers(newUser);
+        await this.usersSqlRepository.creatInDbUser(newUser);
 
         this.emailAdapter.sendEmail(newUser.emailConfirmation.confirmationCode, newUser.email);
 
@@ -67,7 +69,8 @@ export class UsersAuthService {
         return tokens
     }
     async checkCreadentlais(loginOrEmail: string, password: string) {
-        const user = await this.usersRepository.findBlogOrEmail(loginOrEmail);
+
+        const user = await this.usersAuthSqlRepository.findBlogOrEmail(loginOrEmail);
         if (!user) return false;
 
         const passwordHash = await this._generatHash(password, user.passwordSalt);
@@ -84,13 +87,21 @@ export class UsersAuthService {
         return hash;
     }
     async confirmEmail(code: string) {
-        const user: any = await this.usersRepository.findUserByConfirEmail(code);
+
+        const user: any = await this.usersAuthSqlRepository.findUserByConfirEmail(code);
+
 
         if (!user) {
             return null;
         }
-        if (user.emailConfirmation.confirmationCode === code && user.emailConfirmation.expirationDate > new Date()) {
-            const result = await this.usersRepository.updateConfirmation(user._id);
+
+        if (user.is_confirmed) {
+            return null
+        }
+        const expirationDate = new Date(user.expiration_date);
+
+        if (user.confirmation_code === code && expirationDate > new Date()) {
+            const result = await this.usersAuthSqlRepository.updateConfirmation(user.user_id);
 
             return result;
         }
@@ -98,19 +109,24 @@ export class UsersAuthService {
         return null;
     }
     async resendingCode(email: string) {
-        const user = await this.usersRepository.findBlogOrEmail(email);
+        const user = await this.usersAuthSqlRepository.findBlogOrEmail(email);
 
         if (!user) {
-            return null;
+            return false
         }
 
-        if (user.emailConfirmation.isConfirmed) {
-            return null;
+        if (user.isConfirmed) {
+            return false
+
         }
+
         const newCode = randomUUID();
-        await this.usersRepository.updateCodeUserByConfirEmail(user._id, newCode);
+        await this.usersAuthSqlRepository.updateCodeUserByConfirEmail(user._id, newCode);
+
 
         this.emailAdapter.sendEmail(newCode, email);
+
+
 
         return true;
     }
@@ -118,18 +134,14 @@ export class UsersAuthService {
         const passwordRecoveryCode = randomUUID();
 
 
-        await this.usersRepository.postPasswordRecoveryCode(passwordRecoveryCode, email);
+        await this.usersAuthSqlRepository.postPasswordRecoveryCode(passwordRecoveryCode, email);
 
-        try {
-            await this.emailAdapter.sendEmail("null", email, passwordRecoveryCode);
-            return passwordRecoveryCode
-        } catch (e) {
-            console.log(e);
-            return e
-        }
+        this.emailAdapter.sendEmail("null", email, passwordRecoveryCode);
+        return passwordRecoveryCode
+
     }
     async checkPasswordRecovery(code: any, newPassword: string) {
-        const result = await this.usersRepository.checkPasswordRecoveryCode(code);
+        const result = await this.usersAuthSqlRepository.checkPasswordRecoveryCode(code);
 
         if (!result) {
             return false;
@@ -137,25 +149,27 @@ export class UsersAuthService {
         const passwordSalt = await bcrypt.genSalt(10);
         const passwordHash = await this._generatHash(newPassword, passwordSalt);
 
-        await this.usersRepository.updatePassword(result.email, passwordHash, passwordSalt);
+        await this.usersAuthSqlRepository.updatePassword(result.email, passwordHash, passwordSalt);
 
         return true;
     }
     async findUsers(id: string | undefined) {
-        const res = await this.usersRepository.findUsers(id);
+        const res = await this.usersSqlRepository.findinDbUser(id);
 
         return res;
     }
     async checkRefreshToken(refreshToken: string) {
+
         try {
             const result: any = await this.jwtService.verify(refreshToken);
-            const checkSesionshToken = await this.usersRepository.findRottenSessions(result.userId, result.deviceId);
+            const checkSesionshToken = await this.usersAuthSqlRepository.findRottenSessions(result.userId, result.deviceId);
 
 
             if (!checkSesionshToken) {
                 return null;
             }
-            if (result.iat < checkSesionshToken!.lastActiveDate) {
+            //@ts-ignore
+            if (result.iat < checkSesionshToken!.last_active_date) {
                 return null;
             }
 
@@ -175,6 +189,27 @@ export class UsersAuthService {
 
         return tokens
 
+    }
+    async findUserByEmailOrLogin(emailOrLogin: string) {
+        const user = await this.usersAuthSqlRepository.findBlogOrEmail(emailOrLogin);
+
+        if (!user) {
+            return null
+        }
+
+        return user
+
+    }
+    async checkingNumberRequests(metaData: any) {
+        const data = new Date(metaData.date.getTime() - 10000);
+        const result = await this.usersSqlRepository.checkingNumberRequests(metaData, data);
+
+        console.log(result, "ratelimit ratelimit ratelimit ratelimit ratelimit")
+        return result;
+
+    }
+    async addRateLlimit(metaData: any) {
+        await this.usersSqlRepository.addRateLlimit(metaData);
     }
 
 }

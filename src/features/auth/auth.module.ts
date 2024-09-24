@@ -12,14 +12,17 @@ import { User, UserSchema } from '../user/domain/createdBy-user-Admin.entity';
 import { MongooseModule } from '@nestjs/mongoose';
 import { DeviceSesions, DeviceSesionsSchema } from './domain/sesion-auth.entity';
 import { RecoveryPassword, RecoveryPasswordSchema } from './domain/recovery-password-code';
-import { UtilitModule } from 'src/utilit/utitli.module';
+import { UsersAuthSqlRepository } from './infrastructure/auth.sql.repository';
+import { UserModule } from '../user/user.module';
+import { APP_GUARD } from '@nestjs/core';
+import { ThrottlerGuard } from '@nestjs/throttler';
 
 
 
-const authProviders: Provider[] = [UsersAuthService, EmailAdapter, UsersCreatedRepository, SesionsService, JwtAccessStrategy, LocalStrategy]
+const authProviders: Provider[] = [UsersAuthService, EmailAdapter, UsersCreatedRepository, SesionsService, JwtAccessStrategy, LocalStrategy, UsersAuthSqlRepository]
 
 @Module({
-    imports: [ MongooseModule.forFeature([{ name: User.name, schema: UserSchema }, { name: RecoveryPassword.name, schema: RecoveryPasswordSchema }, { name: DeviceSesions.name, schema: DeviceSesionsSchema }])],
+    imports: [MongooseModule.forFeature([{ name: User.name, schema: UserSchema }, { name: RecoveryPassword.name, schema: RecoveryPasswordSchema }, { name: DeviceSesions.name, schema: DeviceSesionsSchema }]), UserModule,],
     controllers: [AuthController, SecuritySesionsController],
     providers: [...authProviders],
     exports: [EmailAdapter, UsersCreatedRepository, UsersAuthService]

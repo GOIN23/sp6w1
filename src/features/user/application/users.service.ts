@@ -8,6 +8,7 @@ import { add } from "date-fns";
 import * as bcrypt from 'bcrypt';
 import { randomUUID } from "crypto";
 import { EmailAdapter } from "../../auth/application/emai-Adapter";
+import { UsersSqlRepository } from "../infrastructure/users.sql.repository";
 
 
 
@@ -15,7 +16,7 @@ import { EmailAdapter } from "../../auth/application/emai-Adapter";
 // Для провайдера всегда необходимо применять декоратор @Injectable() и регистрировать в модуле
 @Injectable()
 export class UsersService {
-    constructor(private usersRepository: UsersRepository, protected emailAdapter: EmailAdapter) { }
+    constructor(private usersRepository: UsersRepository, protected emailAdapter: EmailAdapter, protected usersSqlRepository:UsersSqlRepository) { }
 
     async creatUser(email: string, login: string, password: string): Promise<string> {
 
@@ -54,6 +55,6 @@ export class UsersService {
     }
 
     async deletUser(id: string) {
-        await this.usersRepository.deletUser(id)
+        await this.usersSqlRepository.deletUser(id)
     }
 }

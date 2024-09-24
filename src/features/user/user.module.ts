@@ -1,4 +1,4 @@
-import { MiddlewareConsumer, Module, NestModule, Provider, RequestMethod } from '@nestjs/common';
+import { forwardRef, Module, Provider } from '@nestjs/common';
 import { UsersRepository } from './infrastructure/users.repository';
 import { UsersService } from './application/users.service';
 import { UsersQueryRepository } from './infrastructure/users.query-repository';
@@ -12,22 +12,25 @@ import { CqrsModule } from '@nestjs/cqrs';
 import { UtilitModule } from 'src/utilit/utitli.module';
 import { LoginIsExistContsraint } from './validate/login-is-exist.decorator';
 import { EmailIsExistContsraint } from './validate/email-is-exist.decorator';
+import { UsersSqlRepository } from './infrastructure/users.sql.repository';
+import { UsersSqlQueryRepository } from './infrastructure/users.sql.query.repository';
 
 
-const usersProviders: Provider[] = [UsersRepository, UsersService, UsersQueryRepository, LoginIsExistContsraint,EmailIsExistContsraint]
+const usersProviders: Provider[] = [UsersRepository, UsersService, UsersQueryRepository, LoginIsExistContsraint, EmailIsExistContsraint, UsersSqlRepository, UsersSqlQueryRepository]
 const useCaseUser = [CreateUserUseCase, GetUserUseCase]
 
 
 
 
 @Module({
-    imports: [AuthModule,
+    imports: [
         MongooseModule.forFeature([
             { name: User.name, schema: UserSchema }
-        ]), CqrsModule, UtilitModule
+        ]), CqrsModule, UtilitModule,
+        forwardRef(() => AuthModule)
     ],
     controllers: [UsersController],
-    providers: [...usersProviders, ...useCaseUser],
-    exports: [UsersRepository, UsersService,]
+    providers: [...usersProviders, ...useCaseUser,],
+    exports: [UsersRepository, UsersService, UsersSqlRepository, UsersSqlQueryRepository]
 })
 export class UserModule { }

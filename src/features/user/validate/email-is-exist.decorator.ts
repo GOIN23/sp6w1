@@ -1,6 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { registerDecorator, ValidationArguments, ValidationOptions, ValidatorConstraint, ValidatorConstraintInterface } from "class-validator";
 import { UsersRepository } from "../infrastructure/users.repository";
+import { UsersSqlRepository } from "../infrastructure/users.sql.repository";
 
 
 
@@ -10,10 +11,10 @@ import { UsersRepository } from "../infrastructure/users.repository";
 @ValidatorConstraint({ name: "EmailIsExist", async: true })
 @Injectable()
 export class EmailIsExistContsraint implements ValidatorConstraintInterface {
-    constructor(private readonly UsersRepository: UsersRepository) { }
+    constructor(private readonly UsersRepository: UsersRepository, protected usersSqlRepository:UsersSqlRepository) { }
 
     async validate(value: any, validationArguments: ValidationArguments) {
-        const loginIsExists = await this.UsersRepository.findIsEmail(value)
+        const loginIsExists = await this.usersSqlRepository.findIsEmail(value)
         if (!loginIsExists) {
             return true
         } else {

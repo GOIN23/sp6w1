@@ -10,7 +10,7 @@ import { Type } from "class-transformer";
 export class DefaultValuesPipeUser implements PipeTransform {
     transform(value: any, metadata: ArgumentMetadata) {
         return {
-            sortBy: value.sortBy || 'createdAt',
+            sortBy: value.sortBy || 'created_at',
             sortDirection: value.sortDirection || 'desc',
             pageNumber: value.pageNumber || 1,
             pageSize: value.pageSize || 10,
@@ -26,7 +26,7 @@ export class DefaultValuesPipeUser implements PipeTransform {
 export class QueryParamsDto {
     @IsOptional()
     @IsString()
-    sortBy: string = 'createdAt'; // значение по умолчанию
+    sortBy: string = 'created_at'; // значение по умолчанию
 
     @IsOptional()
     @IsString()

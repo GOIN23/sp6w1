@@ -1,4 +1,4 @@
-import { Module, Provider } from "@nestjs/common";
+import { forwardRef, Module, Provider } from "@nestjs/common";
 import { AuthGuard } from "./guards/basic-auth-guards";
 import { JwtAuthGuard } from "./guards/jwt-auth-guards";
 import { RefreshGuard } from "./guards/refresh-auth-guard";
@@ -25,7 +25,7 @@ const strategy: Provider[] = [JwtAccessStrategy, LocalStrategy]
 
 
 @Module({
-    imports: [JwtModule, AuthModule],
+    imports: [JwtModule, forwardRef(() => AuthModule)],
     providers: [...gurd, ...interceprot, ...pipe, ...strategy],
     exports: [...gurd, ...interceprot, ...pipe, ...strategy],
 

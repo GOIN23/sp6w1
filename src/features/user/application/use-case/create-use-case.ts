@@ -5,6 +5,7 @@ import { User } from "../../domain/createdBy-user-Admin.entity";
 import { randomUUID } from "crypto";
 import { add } from "date-fns";
 import { EmailAdapter } from "../../../auth/application/emai-Adapter";
+import { UsersSqlRepository } from "../../infrastructure/users.sql.repository";
 
 
 export class CreateUserCommand {
@@ -18,7 +19,7 @@ export class CreateUserCommand {
 
 @CommandHandler(CreateUserCommand)
 export class CreateUserUseCase implements ICommandHandler<CreateUserCommand> {
-    constructor(private readonly usersRepository: UsersRepository, protected emailAdapter: EmailAdapter) { }
+    constructor(private readonly usersRepository: UsersRepository, protected emailAdapter: EmailAdapter, protected userSqlRepository: UsersSqlRepository) { }
 
     async execute(dtoInputDate: CreateUserCommand) {
         const passwordSalt = await bcrypt.genSalt(10);
@@ -40,11 +41,17 @@ export class CreateUserUseCase implements ICommandHandler<CreateUserCommand> {
             }
         }
 
-        const userId = await this.usersRepository.creatInDbUser(newUser)
+        // const userId = await this.usersRepository.creatInDbUser(newUser)
+
+
+
+        this.emailAdapter.sendEmail(newUser.emailConfirmation.confirmationCode, newUser.email);
+
+
 
         try {
-            this.emailAdapter.sendEmail(newUser.emailConfirmation.confirmationCode, newUser.email);
-            return userId
+            const userId2 = await this.userSqlRepository.creatInDbUser(newUser)
+            return userId2
         } catch (error) {
             console.log(error)
 

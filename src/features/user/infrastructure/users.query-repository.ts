@@ -18,7 +18,6 @@ export class UsersQueryRepository {
     }
 
     async getUsers(query: QueryParamsDto): Promise<PaginatorUsers | { error: string }> {
-        debugger
         // const searchEmail = query.searchEmailTerm ? { email: { $regex: query.searchEmailTerm, $options: "i" } } : {};
         // const searchLogin = query.searchLoginTerm ? { login: { $regex: query.searchLoginTerm, $options: "i" } } : {};
 

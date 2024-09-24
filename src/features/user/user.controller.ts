@@ -1,23 +1,22 @@
-import { Body, Controller, Delete, Get, HttpCode, HttpException, HttpStatus, Param, Post, Query, UseGuards, UsePipes, ValidationPipe } from "@nestjs/common";
+import { Body, Controller, Delete, Get, HttpCode, HttpException, HttpStatus, Param, Post, Query, UseGuards, UsePipes } from "@nestjs/common";
 import { UsersService } from "./application/users.service";
 import { UserCreateModel } from "./models/input/create-user.input.model";
 import { UserOutputModel } from "./models/output/user.output.model";
 import { UsersQueryRepository } from "./infrastructure/users.query-repository";
-import { qureT } from "src/utilit/TYPE/generalType";
 import { DefaultValuesPipeUser, QueryParamsDto } from "../../utilit/dto/dto.query.user";
 import { AuthGuard } from "../../utilit/guards/basic-auth-guards";
 import { CommandBus, EventBus } from "@nestjs/cqrs";
 import { CreateUserCommand } from "./application/use-case/create-use-case";
 import { UserCreatedEvent } from "./application/event/kill";
 import { DataSource } from "typeorm";
-import { InjectDataSource } from "@nestjs/typeorm";
+import { UsersSqlQueryRepository } from "./infrastructure/users.sql.query.repository";
 
 // @InjectDataSource() protected dataSource: DataSource
 
-@Controller('users')
+@Controller('sa/users')
 @UseGuards(AuthGuard)
 export class UsersController {
-    constructor(protected usersService: UsersService, protected usersQueryRepository: UsersQueryRepository, private commandBuse: CommandBus, private eventBus: EventBus, protected dataSource: DataSource) { }
+    constructor(protected usersService: UsersService, protected usersQueryRepository: UsersQueryRepository, private commandBuse: CommandBus, protected usersSqlQueryRepository: UsersSqlQueryRepository, private eventBus: EventBus, protected dataSource: DataSource) { }
 
     @Post()
     @HttpCode(201)
@@ -25,25 +24,36 @@ export class UsersController {
         const userId = await this.commandBuse.execute(new CreateUserCommand(createModel.login, createModel.email, createModel.password))
 
         this.eventBus.publish(new UserCreatedEvent(userId))
-        return await this.usersQueryRepository.getById(userId);
+        return await this.usersSqlQueryRepository.getById(userId);
     }
 
 
     @Get()
     @UsePipes(new DefaultValuesPipeUser()) // Использование ValidationPipe
     @HttpCode(200)
-    async geteUser(@Query() qurePagination: QueryParamsDto) {
-        const users = await this.usersQueryRepository.getUsers(qurePagination)
+    async getUsers(@Query() qurePagination: QueryParamsDto) {
+        const users = await this.usersSqlQueryRepository.getUsers(qurePagination)
 
         return users
 
     }
 
 
+    @Get("/:id")
+    @HttpCode(200)
+    async geteUser(@Param("id") id: string) {
+        const users = await this.usersSqlQueryRepository.getById(id)
+
+        return users
+
+    }
+
+
+
     @Delete("/:id")
     @HttpCode(204)
     async deleteUser(@Param("id") id: string) {
-        const user = await this.usersService.findUser(id)
+        const user = await this.usersSqlQueryRepository.getById(id)
         if (!user) {
             throw new HttpException('User not found', HttpStatus.NOT_FOUND);
 
@@ -53,18 +63,6 @@ export class UsersController {
     }
 
 
-    @Get("test")
-    async testPost() {
-
-        return this.dataSource.query(
-            `
-        SELECT order_id, order_date, last_name
-FROM orders
-LEFT JOIN employees ON orders.employee_id = employees.employee_id
-LIMIT 5
-            `
-        )
-    }
 }
 
 

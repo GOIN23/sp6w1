@@ -24,6 +24,7 @@ import { ContentModule } from './features/content/content.moudle';
 import { UtilitModule } from './utilit/utitli.module';
 import { CoreModule } from './utilit/core.modu';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { DeleteAllsController } from './features/testing-all-data/testing-all-data';
 
 
 @Module({
@@ -34,7 +35,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
       port: 5432,
       username: 'postgres',
       password: '1234',
-      database: 'northwind',
+      database: 'NestPage',
       autoLoadEntities: false,
       synchronize: false,
     }),
@@ -60,7 +61,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
       },
       inject: [ConfigService], // Инъекция ConfigService
     }),
-    
+
     ConfigModule.forRoot({
       isGlobal: true,
       load: [configuration]
@@ -82,6 +83,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
     provide: APP_GUARD,
     useClass: ThrottlerGuard
   }],
+  controllers: [DeleteAllsController]
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
