@@ -6,11 +6,12 @@ import { PostRepository } from "../infrastructure/posts.repository";
 import { ObjectId } from "mongodb"
 import { BlogOutputModel } from '../../blogs/models/output/blog.output.model';
 import { CommentLikeT, CommentViewModel, CommentViewModelDb } from '../../comments/type/typeCommen';
+import { PostSqlRepository } from '../infrastructure/posts.sql.repository';
 
 
 @Injectable()
 export class PostsService {
-    constructor(private postRepository: PostRepository) { }
+    constructor(private postRepository: PostRepository, protected postSqlRepository:PostSqlRepository) { }
 
     async creatPosts(postsModel: PostsCreateModel, blog: BlogOutputModel) {
 
@@ -30,16 +31,16 @@ export class PostsService {
 
 
         }
-        return await this.postRepository.creatInDbPost(newUser)
+        return await this.postSqlRepository.creatInDbPost(newUser)
 
     }
 
     async updatePost(id: string, postsModel: PostsCreateModel) {
-        await this.postRepository.updatePost(id, postsModel)
+        await this.postSqlRepository.updatePost(id, postsModel)
     }
 
     async deletePost(id: string) {
-        await this.postRepository.deletePost(id)
+        await this.postSqlRepository.deletePost(id)
     }
 
     async createCommentPost(content: string, user: any, IdPost: string): Promise<CommentViewModel | null> {

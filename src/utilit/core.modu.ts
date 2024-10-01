@@ -13,7 +13,7 @@ import { JwtModule } from "@nestjs/jwt";
     imports: [
         JwtModule.register({
             secret: 'your_secret_key', // Замените на ваш секретный ключ
-            signOptions: { expiresIn: '10s' }, // Время жизни токена (например, 1 час)
+            signOptions: { expiresIn: '6m' }, // Время жизни токена (например, 1 час)
         })
     ],
     exports: [JwtModule]

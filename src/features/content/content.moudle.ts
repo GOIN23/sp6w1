@@ -27,20 +27,25 @@ import { UtilitModule } from "src/utilit/utitli.module";
 import { JwtModule } from "@nestjs/jwt";
 import { UserModule } from "../user/user.module";
 import { NameIsExistConstraint } from "src/utilit/decorators/transform/blogFind";
+import { BlogsSqlQueryRepository } from "./blogs/infrastructure/blogs.query.sql-repository";
+import { BlogSqlRepository } from "./blogs/infrastructure/blogs.sql.repository";
+import { PostSqlRepository } from "./posts/infrastructure/posts.sql.repository";
+import { PostsQuerySqlRepository } from "./posts/infrastructure/posts.query.sql-repository";
+import { BlogsControllerGet } from "./blog.contr.get";
 
 
 
-const blogsProvides: Provider[] = [BlogService, BlogRepository, BlogsQueryRepository, NameIsExistConstraint]
+const blogsProvides: Provider[] = [BlogService, BlogRepository, BlogsQueryRepository, NameIsExistConstraint, BlogsSqlQueryRepository, BlogSqlRepository]
 
 
-const postsProvedis: Provider[] = [PostsService, PostsQueryRepository, PostRepository]
+const postsProvedis: Provider[] = [PostsService, PostsQueryRepository, PostRepository, PostSqlRepository, PostsQuerySqlRepository]
 const commentsProvides: Provider[] = [CommentsService, CommentsQueryRepository, CommentsRepository]
 const useCaseComment: Provider[] = [DeleteeCommentrUseCase, updateCommentUseCase, UpdateLikeDislikeOnCommentUseCase]
 
 
 @Module({
     imports: [MongooseModule.forFeature([{ name: Blog.name, schema: BlogSchema }, { name: Posts.name, schema: PostSchema }, { name: LikesCommentsInfo.name, schema: LikesCommentsSchema }, { name: LikesPostInfo.name, schema: LLikesPostInfoSchema }, { name: Comments.name, schema: CommentSchema }]), AuthModule, CqrsModule, UtilitModule, JwtModule, UserModule],
-    controllers: [BlogsController, PostsController, CommentsController],
+    controllers: [BlogsController, PostsController, CommentsController, BlogsControllerGet],
     providers: [...blogsProvides, ...postsProvedis, ...commentsProvides, ...useCaseComment],
 
 })

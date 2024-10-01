@@ -28,6 +28,8 @@ export class DeleteAllsController {
         TRUNCATE TABLE email_confirmation RESTART IDENTITY CASCADE;
         TRUNCATE TABLE device_sesions RESTART IDENTITY CASCADE;
         TRUNCATE TABLE recovery_password RESTART IDENTITY CASCADE; 
+        TRUNCATE TABLE blogs RESTART IDENTITY CASCADE; 
+        TRUNCATE TABLE posts RESTART IDENTITY CASCADE; 
   `
 
         await this.dataSource.query(queryuDeleteMany)

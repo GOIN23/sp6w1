@@ -79,10 +79,10 @@ import { DeleteAllsController } from './features/testing-all-data/testing-all-da
     ContentModule,
     UtilitModule
   ],
-  providers: [{
-    provide: APP_GUARD,
-    useClass: ThrottlerGuard
-  }],
+  // providers: [{
+  //   provide: APP_GUARD,
+  //   useClass: ThrottlerGuard
+  // }],
   controllers: [DeleteAllsController]
 })
 export class AppModule implements NestModule {

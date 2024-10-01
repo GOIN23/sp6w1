@@ -1,13 +1,13 @@
 
-import { HttpException, HttpStatus, Injectable } from "@nestjs/common";
-import { Types } from "mongoose";
+import { Injectable } from "@nestjs/common";
 import { BlogRepository } from "../infrastructure/blogs.repository";
 import { BlogCreateModel } from "../models/input/create-blog.input.bodel";
 import { blogT } from "../TYPE/type";
+import { BlogSqlRepository } from "../infrastructure/blogs.sql.repository";
 
 @Injectable()
 export class BlogService {
-    constructor(private blogRepository: BlogRepository,) { }
+    constructor( protected blogSqlRepository: BlogSqlRepository) { }
 
     async creatBlog(blogModel: BlogCreateModel) {
         const newUser: blogT = {
@@ -17,18 +17,18 @@ export class BlogService {
             createdAt: new Date().toISOString(),
             isMembership: false
         }
-        return await this.blogRepository.creatInDbBlog(newUser)
+        return await this.blogSqlRepository.creatInDbBlog(newUser)
 
     }
 
     async updateBlog(id: string, inputBlog: BlogCreateModel) {
-        await this.blogRepository.updateBlog(id, inputBlog)
+        await this.blogSqlRepository.updateBlog(id, inputBlog)
 
 
     }
 
     async deletBlog(id: string) {
-        await this.blogRepository.deletBlog(id)
+        await this.blogSqlRepository.deletBlog(id)
     }
 
 }

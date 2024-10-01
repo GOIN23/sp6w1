@@ -33,7 +33,6 @@ export class UsersSqlQueryRepository {
     }
 
     async getUsers(query: QueryParamsDto): Promise<PaginatorUsers | { error: string }> {
-        debugger
 
         const sortBy = query.sortBy || 'created_at'; // по умолчанию сортировка по 'login'
 

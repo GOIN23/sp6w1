@@ -8,7 +8,7 @@ import { Type } from "class-transformer";
 export class DefaultValuesPipe implements PipeTransform {
     transform(value: any, metadata: ArgumentMetadata) {
         return {
-            sortBy: value.sortBy || 'createdAt',
+            sortBy: value.sortBy || 'created_at',
             sortDirection: value.sortDirection || 'desc',
             pageNumber: value.pageNumber || 1,
             pageSize: value.pageSize || 10,

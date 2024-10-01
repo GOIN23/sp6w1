@@ -1,3 +1,4 @@
+import { PostsQuerySqlRepository } from './infrastructure/posts.query.sql-repository';
 import { Body, Controller, Delete, Get, Headers, HttpCode, HttpException, HttpStatus, Param, Post, Put, Query, Req, Request, UnauthorizedException, UseGuards, UseInterceptors, UsePipes, ValidationPipe } from "@nestjs/common";
 import { PostsService } from "./application/posts.service";
 import { PostsQueryRepository } from "./infrastructure/posts.query-repository";
@@ -24,71 +25,71 @@ import { JwtAuthGuard } from "src/utilit/guards/jwt-auth-guards";
 
 @Controller('posts')
 export class PostsController {
-    constructor(protected postsService: PostsService, protected postsQueryRepository: PostsQueryRepository, protected blogsQueryRepository: BlogsQueryRepository, protected jwtService: JwtService, protected usersService: UsersService, protected commentsQueryRepository: CommentsQueryRepository) { }
+    constructor(protected postsService: PostsService, protected postsQueryRepository: PostsQueryRepository, protected blogsQueryRepository: BlogsQueryRepository, protected jwtService: JwtService, protected usersService: UsersService, protected commentsQueryRepository: CommentsQueryRepository, protected postsQuerySqlRepository:PostsQuerySqlRepository) { }
 
-    @Post("")
-    @UseGuards(AuthGuard)
-    @HttpCode(201)
-    async createPost(@Body() postsModel: PostsCreateModel) {
-        const blogId = await this.blogsQueryRepository.getById(postsModel.blogId)
-
-
-        if (!blogId) {
-            throw new HttpException('User not found', HttpStatus.NOT_FOUND);
-
-        }
-
-        const postId = await this.postsService.creatPosts(postsModel, blogId)
+    // @Post("")
+    // @UseGuards(AuthGuard)
+    // @HttpCode(201)
+    // async createPost(@Body() postsModel: PostsCreateModel) {
+    //     const blogId = await this.blogsQueryRepository.getById(postsModel.blogId)
 
 
-        return await this.postsQueryRepository.getById(postId)
-    }
+    //     if (!blogId) {
+    //         throw new HttpException('User not found', HttpStatus.NOT_FOUND);
 
-    @Post("/:id/comments")
-    @UseGuards(JwtAuthGuardPassport, RefreshGuard)// Это единсвтенное место где я использую passportJwt
-    @HttpCode(201)
-    async creatComments(@Body() commentPosts: CommentPosts, @Param("id") id: string, @Request() req) {
-        const post = await this.postsQueryRepository.getById(id);
+    //     }
+
+    //     const postId = await this.postsService.creatPosts(postsModel, blogId)
 
 
+    //     return await this.postsQueryRepository.getById(postId)
+    // }
 
-        if (!post) {
-            throw new HttpException('User not found', HttpStatus.NOT_FOUND);
-
-        }
-
-        const resulComment = await this.postsService.createCommentPost(commentPosts.content, req.user, post.id);
-
-        return resulComment
-    }
-
-    @Get("/:id/comments")
-    @HttpCode(200)
-    async getComments(@Param("id") id: string, @Query(new DefaultValuesPipe()) qurePagination: QueryPostsParamsDto, @Request() req,) {
-        let payload
-        try {
-            const res = req.headers.authorization.split(' ')[1]
-            payload = this.jwtService.verify(res)
-        } catch (error) {
-            console.log(error)
-        }
-
-        const userId = payload ? payload.userId : "null"
-
-
-        const post = await this.postsQueryRepository.getById(id);
-
-        if (!post) {
-            throw new HttpException('User not found', HttpStatus.NOT_FOUND);
-        }
+    // @Post("/:id/comments")
+    // @UseGuards(JwtAuthGuardPassport, RefreshGuard)// Это единсвтенное место где я использую passportJwt
+    // @HttpCode(201)
+    // async creatComments(@Body() commentPosts: CommentPosts, @Param("id") id: string, @Request() req) {
+    //     const post = await this.postsQueryRepository.getById(id);
 
 
 
-        const commetns = await this.commentsQueryRepository.getCommentPosts(post.id, qurePagination, userId);
+    //     if (!post) {
+    //         throw new HttpException('User not found', HttpStatus.NOT_FOUND);
 
-        return commetns
+    //     }
 
-    }
+    //     const resulComment = await this.postsService.createCommentPost(commentPosts.content, req.user, post.id);
+
+    //     return resulComment
+    // }
+
+    // @Get("/:id/comments")
+    // @HttpCode(200)
+    // async getComments(@Param("id") id: string, @Query(new DefaultValuesPipe()) qurePagination: QueryPostsParamsDto, @Request() req,) {
+    //     let payload
+    //     try {
+    //         const res = req.headers.authorization.split(' ')[1]
+    //         payload = this.jwtService.verify(res)
+    //     } catch (error) {
+    //         console.log(error)
+    //     }
+
+    //     const userId = payload ? payload.userId : "null"
+
+
+    //     const post = await this.postsQueryRepository.getById(id);
+
+    //     if (!post) {
+    //         throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+    //     }
+
+
+
+    //     const commetns = await this.commentsQueryRepository.getCommentPosts(post.id, qurePagination, userId);
+
+    //     return commetns
+
+    // }
 
 
     @Get("")
@@ -106,7 +107,7 @@ export class PostsController {
 
         const userId = payload ? payload.userId : "null"
 
-        const posts = await this.postsQueryRepository.getPosts(qurePagination, userId)
+        const posts = await this.postsQuerySqlRepository.getPosts(qurePagination, userId)
 
         return posts
 
@@ -125,7 +126,7 @@ export class PostsController {
 
         const userId = payload ? payload.userId : "null"
 
-        const posts = await this.postsQueryRepository.getById(id, userId)
+        const posts = await this.postsQuerySqlRepository.getById(id, userId)
 
         if (!posts) {
             throw new HttpException('Posts not found', HttpStatus.NOT_FOUND);
@@ -137,59 +138,59 @@ export class PostsController {
 
     }
 
-    @Put("/:id/like-status")
-    @UseGuards(JwtAuthGuard, RefreshGuard)
-    @HttpCode(204)
-    async putLikeStatusPosts(@Param("id") id: string, @Body() likeStatusModel: PutLikeComment, @Request() req) {
+    // @Put("/:id/like-status")
+    // @UseGuards(JwtAuthGuard, RefreshGuard)
+    // @HttpCode(204)
+    // async putLikeStatusPosts(@Param("id") id: string, @Body() likeStatusModel: PutLikeComment, @Request() req) {
 
-        const posts = await this.postsQueryRepository.getById(id)
+    //     const posts = await this.postsQueryRepository.getById(id)
 
-        if (!posts) {
-            throw new HttpException('Posts not found', HttpStatus.NOT_FOUND);
-        }
+    //     if (!posts) {
+    //         throw new HttpException('Posts not found', HttpStatus.NOT_FOUND);
+    //     }
 
-        await this.postsService.updatePostsLikeDeslike(likeStatusModel.likeStatus, id, req.user.userId || "null", req.user.userLogin || "null");
-
-
-    }
+    //     await this.postsService.updatePostsLikeDeslike(likeStatusModel.likeStatus, id, req.user.userId || "null", req.user.userLogin || "null");
 
 
-    @Put("/:id")
-    @UseGuards(AuthGuard, RefreshGuard)
-    @HttpCode(204)
-    async putPostById(@Param("id") id: string, @Body() postsModel: PostsCreateModel) {
+    // }
 
-        const post = await this.postsQueryRepository.getById(id)
 
-        if (!post) {
-            throw new HttpException('Post not found', HttpStatus.NOT_FOUND);
+    // @Put("/:id")
+    // @UseGuards(AuthGuard, RefreshGuard)
+    // @HttpCode(204)
+    // async putPostById(@Param("id") id: string, @Body() postsModel: PostsCreateModel) {
 
-        }
+    //     const post = await this.postsQueryRepository.getById(id)
 
-        const blog = await this.blogsQueryRepository.getById(postsModel.blogId)
+    //     if (!post) {
+    //         throw new HttpException('Post not found', HttpStatus.NOT_FOUND);
 
-        if (!blog) {
-            throw new HttpException('Blog not found', HttpStatus.NOT_FOUND);
+    //     }
 
-        }
+    //     const blog = await this.blogsQueryRepository.getById(postsModel.blogId)
 
-        await this.postsService.updatePost(id, postsModel)
-    }
+    //     if (!blog) {
+    //         throw new HttpException('Blog not found', HttpStatus.NOT_FOUND);
 
-    @Delete("/:id")
-    @UseGuards(AuthGuard, RefreshGuard)
-    @HttpCode(204)
-    async deletePostById(@Param("id") id: string,) {
+    //     }
 
-        const post = await this.postsQueryRepository.getById(id)
+    //     await this.postsService.updatePost(id, postsModel)
+    // }
 
-        if (!post) {
-            throw new HttpException('Post not found', HttpStatus.NOT_FOUND);
+    // @Delete("/:id")
+    // @UseGuards(AuthGuard, RefreshGuard)
+    // @HttpCode(204)
+    // async deletePostById(@Param("id") id: string,) {
 
-        }
+    //     const post = await this.postsQueryRepository.getById(id)
 
-        await this.postsService.deletePost(id)
-    }
+    //     if (!post) {
+    //         throw new HttpException('Post not found', HttpStatus.NOT_FOUND);
+
+    //     }
+
+    //     await this.postsService.deletePost(id)
+    // }
 
 
 

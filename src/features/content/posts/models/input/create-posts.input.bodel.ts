@@ -1,6 +1,6 @@
-import { IsMongoId, IsNotEmpty, IsOptional, IsString, Length, Matches, MaxLength } from "class-validator";
+import { IsNotEmpty, IsOptional, IsString, MaxLength } from "class-validator";
 import { NameIsExist } from "../../../../../utilit/decorators/transform/blogFind";
-import { Trim } from "../../../../../utilit/decorators/transform/trim"
+import { Trim } from "../../../../../utilit/decorators/transform/trim";
 
 
 export class PostsCreateModel {
