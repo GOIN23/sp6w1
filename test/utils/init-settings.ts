@@ -1,13 +1,13 @@
 import { Test, TestingModuleBuilder } from '@nestjs/testing';
-import { AppModule } from '../../src/app.module';
-import { UsersService } from '../../src/features/users/application/users.service';
-import { UserServiceMockObject } from '../mock/user.service.mock';
-import { applyAppSettings } from '../../src/settings/apply-app-setting';
-import { Connection } from 'mongoose';
+
 import { getConnectionToken } from '@nestjs/mongoose';
+import { Connection } from 'mongoose';
+import { AppModule } from '../../src/app.module';
+import { UsersService } from '../../src/features/user/application/users.service';
+import { applyAppSettings } from '../../src/settings/apply-app-setting';
+import configuration from '../../src/settings/configuration';
 import { deleteAllData } from './delete-all-data';
 import { UsersTestManager } from './users-test-manager';
-import configuration from '../../src/settings/configuration';
 
 export const initSettings = async (
   //передаем callback, который получает ModuleBuilder, если хотим изменить настройку тестового модуля
@@ -18,7 +18,7 @@ export const initSettings = async (
     imports: [AppModule],
   })
     .overrideProvider(UsersService)
-    .useValue(UserServiceMockObject);
+    .useValue(2);
 
   if (addSettingsToModuleBuilder) {
     addSettingsToModuleBuilder(testingModuleBuilder);

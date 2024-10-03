@@ -1,17 +1,16 @@
 import { Injectable } from '@nestjs/common';
 
+import { BlogOutputModel } from '../../blogs/models/output/blog.output.model';
+import { CommentLikeT, CommentViewModelDb } from '../../comments/type/typeCommen';
+import { PostRepository } from "../infrastructure/posts.repository";
+import { PostSqlRepository } from '../infrastructure/posts.sql.repository';
 import { PostsCreateModel } from "../models/input/create-posts.input.bodel";
 import { statusCommentLike } from "../type/typePosts";
-import { PostRepository } from "../infrastructure/posts.repository";
-import { ObjectId } from "mongodb"
-import { BlogOutputModel } from '../../blogs/models/output/blog.output.model';
-import { CommentLikeT, CommentViewModel, CommentViewModelDb } from '../../comments/type/typeCommen';
-import { PostSqlRepository } from '../infrastructure/posts.sql.repository';
 
 
 @Injectable()
 export class PostsService {
-    constructor(private postRepository: PostRepository, protected postSqlRepository:PostSqlRepository) { }
+    constructor(private postRepository: PostRepository, protected postSqlRepository: PostSqlRepository) { }
 
     async creatPosts(postsModel: PostsCreateModel, blog: BlogOutputModel) {
 
@@ -43,13 +42,13 @@ export class PostsService {
         await this.postSqlRepository.deletePost(id)
     }
 
-    async createCommentPost(content: string, user: any, IdPost: string): Promise<CommentViewModel | null> {
+    async createCommentPost(content: string, user: any, IdPost: string) {
+
 
         const newCommentPosts: CommentViewModelDb = {
-            _id: new ObjectId().toString(),
             content: content,
             commentatorInfo: {
-                userId: user._id,
+                userId: user.userId,
                 userLogin: user.login,
             },
             createdAt: new Date().toISOString(),
@@ -64,19 +63,29 @@ export class PostsService {
         type CommentWithouId = Omit<CommentLikeT, '_id'>;
 
 
-        const likeInfoMetaData: CommentWithouId = {
-            commentId: newCommentPosts._id,
+
+
+
+
+
+
+        const commentsId = await this.postSqlRepository.createCommentPost(newCommentPosts);
+
+        const likeInfoMetaData: any = {
+            //@ts-ignore
+            commentId: commentsId,
             createdAt: new Date().toISOString(),
             status: statusCommentLike.None,
-            userID: user._id,
+            userID: user.userId,
+            userLogin: user.login
         };
 
-        await this.postRepository.createCommentPost(newCommentPosts);
-        await this.postRepository.createLikeInfoMetaDataComment(likeInfoMetaData);
+
+        await this.postSqlRepository.createLikeInfoMetaDataComment(likeInfoMetaData);
 
 
         return {
-            id: newCommentPosts._id,
+            id: `${commentsId}`,
             commentatorInfo: newCommentPosts.commentatorInfo,
             content: newCommentPosts.content,
             createdAt: newCommentPosts.createdAt,
@@ -101,6 +110,5 @@ export class PostsService {
 
         await this.postRepository.updateLikeStatusInPosts(userId, likeStatus, postId);
     }
-
 
 }

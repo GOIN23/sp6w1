@@ -13,6 +13,6 @@ export class QueryPostsParamsDto {
     pageNumber: number = 1; // значение по умолчанию
     pageSize?: number = 10; // значение по умолчанию
 
-    s
+
     searchNameTerm: string = null
 }

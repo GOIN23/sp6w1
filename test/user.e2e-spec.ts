@@ -1,16 +1,14 @@
 import { INestApplication } from "@nestjs/common";
-import { UsersTestManager } from "./utils/users-test-manager";
 import { Test, TestingModule } from "@nestjs/testing";
-import { AppModule } from "../src/app.module";
-import { applyAppSettings } from "../src/settings/apply-app-setting";
-import { UserCreateModel } from "../src/features/user/models/input/create-user.input.model";
 import * as request from 'supertest';
+import { AppModule } from "../src/app.module";
+import { EmailAdapter } from "../src/features/auth/application/emai-Adapter";
+import { UserCreateModel } from "../src/features/user/models/input/create-user.input.model";
+import { applyAppSettings } from "../src/settings/apply-app-setting";
 import { EmailAdapterMock } from "./mock/email.adapter.mock";
-import { EmailAdapter } from "../src/features/auth/application/emai-Adapter"
-import { skipSettings } from "./utils/skip-settings";
 import { aDescribe } from "./utils/aDescribe";
-
-
+import { skipSettings } from "./utils/skip-settings";
+import { UsersTestManager } from "./utils/users-test-manager";
 export const ADMIN_AUTH = "admin:qwerty"; // get from SETTINGS
 const buff2 = Buffer.from(ADMIN_AUTH, "utf8");
 let codedAuth: string = buff2.toString("base64");

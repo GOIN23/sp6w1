@@ -1,7 +1,8 @@
-import { Body, Controller, Delete, Get, HttpCode, HttpException, HttpStatus, Param, Post, Req, Request, Res, UseFilters, UseGuards } from "@nestjs/common";
-import { SkipThrottle, Throttle } from "@nestjs/throttler";
-import { SesionsService } from "src/features/auth/application/sesions-service";
-import { UsersAuthService } from "src/features/auth/application/auth-service";
+import { Controller, Delete, Get, HttpCode, HttpException, HttpStatus, Param, Request } from "@nestjs/common";
+import { SkipThrottle } from "@nestjs/throttler";
+import { UsersAuthService } from "../../auth/application/auth-service";
+import { SesionsService } from "../../auth/application/sesions-service";
+
 
 
 @SkipThrottle()

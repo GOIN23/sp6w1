@@ -1,14 +1,13 @@
-import { Body, Controller, Get, HttpCode, HttpException, HttpStatus, Post, Request, Res, UseFilters, UseGuards } from "@nestjs/common";
-import { UserCreateModel } from "../../user/models/input/create-user.input.model"
-import { LoginUserCreateModel } from "./models/input/login-user.input.models";
+import { Body, Controller, Get, HttpCode, HttpException, HttpStatus, Post, Request, Res, UseGuards } from "@nestjs/common";
+import { AuthGuard } from "@nestjs/passport";
+import { SkipThrottle } from "@nestjs/throttler";
+import { Response } from 'express';
+import { LocalAuthGuard } from "../../../utilit/strategies/local-auth-strategies";
+import { UserCreateModel } from "../../user/models/input/create-user.input.model";
 import { UsersAuthService } from "../application/auth-service";
+import { SesionsService } from "../application/sesions-service";
 import { EmailInputeModel } from "./models/input/email-user.input.models";
 import { NewPasswordInputeModel } from "./models/input/new-password.models";
-import { AuthGuard } from "@nestjs/passport";
-import { SkipThrottle, Throttle, ThrottlerGuard } from "@nestjs/throttler";
-import { Response } from 'express';
-import { LocalAuthGuard } from "src/utilit/strategies/local-auth-strategies";
-import { SesionsService } from "../application/sesions-service";
 
 
 

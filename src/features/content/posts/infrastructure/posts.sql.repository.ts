@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
 
-import { PostViewModelLiKeArray } from '../type/typePosts';
 import { PostsCreateModel } from '../models/input/create-posts.input.bodel';
-import { CommentViewModelDb, PostLikeT } from 'src/features/content/comments/type/typeCommen';
+import { PostViewModelLiKeArray } from '../type/typePosts';
 
 import { DataSource } from 'typeorm';
+import { CommentViewModelDb } from '../../comments/type/typeCommen';
 
 
 @Injectable()
@@ -63,13 +63,44 @@ export class PostSqlRepository {
         }
 
     }
-    // async createCommentPost(body: CommentViewModelDb): Promise<void> {
-    //     await this.commentsModel.insertMany(body);
-    // }
+    async createCommentPost(body: CommentViewModelDb): Promise<void> {
+        const queryCommentsTable = ` 
+        INSERT INTO comments (content, created_at, post_id_fk)
+        VALUES($1, $2, $3)
+        RETURNING comments_id
+        `
 
-    // async createLikeInfoMetaDataComment(body: any): Promise<void> {
-    //     await this.likesModule.insertMany(body);
-    // }
+        const parameter = [body.content, body.createdAt, body.IdPost]
+
+
+        try {
+            const commentsId = await this.dataSource.query(queryCommentsTable, parameter)
+
+            return commentsId[0].comments_id
+        } catch (error) {
+            console.log(error)
+        }
+
+
+
+
+    }
+
+    async createLikeInfoMetaDataComment(body: any): Promise<void> {
+        const queryLikesInfosTable = ` 
+        INSERT INTO likes_info_comments (user_fk_id, comments_fk_id, created_at, status, user_login)
+        VALUES($1, $2, $3, $4, $5)
+        `
+
+        const parameterLikesInfo = [body.userID, body.commentId, body.createdAt, body.status, body.userLogin]
+        try {
+            await this.dataSource.query(queryLikesInfosTable, parameterLikesInfo)
+
+        } catch (error) {
+            console.log(error)
+        }
+
+    }
 
     // async findLikeDislakePost(userID: string, postId: string): Promise<PostLikeT | boolean> {
     //     try {

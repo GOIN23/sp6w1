@@ -1,6 +1,7 @@
 import { Body, Controller, Delete, Get, HttpCode, HttpException, HttpStatus, Param, Post, Put, Query, Request, UseGuards } from "@nestjs/common";
 import { JwtService } from '@nestjs/jwt';
-import { AuthGuard } from "src/utilit/guards/basic-auth-guards";
+// import { AuthGuard } from "src/utilit/guards/basic-auth-guards";
+import { AuthGuard } from "../../../utilit/guards/basic-auth-guards";
 import { PostsService } from "../posts/application/posts.service";
 import { PostsQueryRepository } from "../posts/infrastructure/posts.query-repository";
 import { PostsQuerySqlRepository } from "../posts/infrastructure/posts.query.sql-repository";

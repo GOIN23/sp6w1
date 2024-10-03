@@ -1,6 +1,6 @@
-import { HttpCode, INestApplication } from '@nestjs/common';
-import { UserCreateModel } from 'src/features/user/models/input/create-user.input.model';
+import { INestApplication } from '@nestjs/common';
 import * as request from 'supertest';
+import { UserCreateModel } from '../../src/features/user/models/input/create-user.input.model';
 
 export const ADMIN_AUTH = "admin:qwerty"; // get from SETTINGS
 const buff2 = Buffer.from(ADMIN_AUTH, "utf8");

@@ -1,17 +1,17 @@
 import { Injectable } from "@nestjs/common";
-import { ObjectId } from "mongodb";
-import { UsersCreatedRepository } from "../infrastructure/users.repository";
-import * as bcrypt from 'bcrypt';
-import { add } from "date-fns";
-import { randomUUID } from "crypto";
-import { EmailAdapter } from "./emai-Adapter";
 import { JwtService } from "@nestjs/jwt";
-import { User } from "../../user/domain/createdBy-user-Admin.entity"
-import { UserCreateModel } from "../../user/models/input/create-user.input.model"
-import { SesionsService } from "./sesions-service";
+import * as bcrypt from 'bcrypt';
+import { randomUUID } from "crypto";
+import { add } from "date-fns";
+import { ObjectId } from "mongodb";
+import { User } from "../../user/domain/createdBy-user-Admin.entity";
+import { UsersSqlRepository } from "../../user/infrastructure/users.sql.repository";
+import { UserCreateModel } from "../../user/models/input/create-user.input.model";
 import { DeviceSesions } from "../domain/sesion-auth.entity";
-import { UsersSqlRepository } from "src/features/user/infrastructure/users.sql.repository";
 import { UsersAuthSqlRepository } from "../infrastructure/auth.sql.repository";
+import { UsersCreatedRepository } from "../infrastructure/users.repository";
+import { EmailAdapter } from "./emai-Adapter";
+import { SesionsService } from "./sesions-service";
 
 
 
@@ -53,7 +53,7 @@ export class UsersAuthService {
     async login(user: any) {
         const deviceId: string = new ObjectId().toString()
         const payload = { userLogin: user.login, userId: user.userId, deviceId: deviceId };
-        const tokens = { accessToken: this.jwtService.sign(payload), refreshToken: this.jwtService.sign(payload, { expiresIn: "20s" }) }
+        const tokens = { accessToken: this.jwtService.sign(payload), refreshToken: this.jwtService.sign(payload, { expiresIn: "5m" }) }
 
         const userSession: DeviceSesions = {
             userId: user.userId,

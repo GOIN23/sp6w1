@@ -1,4 +1,4 @@
-import { extendedLikesInfo } from "src/features/content/posts/type/typePosts"
+import { extendedLikesInfo } from "../../../posts/type/typePosts"
 
 
 

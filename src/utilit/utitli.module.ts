@@ -1,4 +1,6 @@
 import { forwardRef, Module, Provider } from "@nestjs/common";
+import { JwtModule } from "@nestjs/jwt";
+import { AuthModule } from "../features/auth/auth.module";
 import { AuthGuard } from "./guards/basic-auth-guards";
 import { JwtAuthGuard } from "./guards/jwt-auth-guards";
 import { RefreshGuard } from "./guards/refresh-auth-guard";
@@ -6,8 +8,6 @@ import { LoggingInterceptor } from "./interceptors/login-inte";
 import { NumberPipe } from "./pipe/number.pipe";
 import { JwtAccessStrategy } from "./strategies/jwt-auth-strategies";
 import { LocalStrategy } from "./strategies/local-auth-strategies";
-import { JwtModule } from "@nestjs/jwt";
-import { AuthModule } from "src/features/auth/auth.module";
 
 
 

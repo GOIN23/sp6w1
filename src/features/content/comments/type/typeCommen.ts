@@ -31,7 +31,7 @@ export type metaLikesInfoT = {
   myStatus: statusCommentLike;
 };
 export type CommentViewModelDb = {
-  _id: string;
+  _id?: string;
   content: string;
   commentatorInfo: CommentatorInfo;
   createdAt: string;
@@ -53,8 +53,8 @@ export type PostLikeT = {
   postId: string;
   status: statusCommentLike;
   createdAt: string;
-  login:string,
-  
+  login: string,
+
 };
 
 

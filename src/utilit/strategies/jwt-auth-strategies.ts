@@ -1,8 +1,7 @@
 import { Injectable, UnauthorizedException } from "@nestjs/common";
 import { AuthGuard, PassportStrategy } from "@nestjs/passport";
-import { Strategy, ExtractJwt } from "passport-jwt";
-import { UsersAuthService } from "../../features/auth/application/auth-service"
-import { use } from "passport";
+import { ExtractJwt, Strategy } from "passport-jwt";
+import { UsersAuthService } from "../../features/auth/application/auth-service";
 
 @Injectable()
 export class JwtAccessStrategy extends PassportStrategy(Strategy) {
@@ -16,7 +15,6 @@ export class JwtAccessStrategy extends PassportStrategy(Strategy) {
     }
 
     async validate(payload: any) {
-        debugger
         const user = await this.usersAuthService.findUsers(payload.userId); // Предположим, у вас есть метод findById
         if (!user) {
             throw new UnauthorizedException();

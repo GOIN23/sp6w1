@@ -3,8 +3,6 @@
 //  .overrideProvider(UsersService)
 //  .useValue(UserServiceMockObject)
 
-import { SentMessageInfo } from "nodemailer/lib/smtp-transport";
-import { EmailAdapter } from "src/features/auth/application/emai-Adapter";
 
 
 export class EmailAdapterMock {

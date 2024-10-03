@@ -1,21 +1,22 @@
-import { PostsQuerySqlRepository } from './infrastructure/posts.query.sql-repository';
-import { Body, Controller, Delete, Get, Headers, HttpCode, HttpException, HttpStatus, Param, Post, Put, Query, Req, Request, UnauthorizedException, UseGuards, UseInterceptors, UsePipes, ValidationPipe } from "@nestjs/common";
+import { Body, Controller, Get, HttpCode, HttpException, HttpStatus, Param, Post, Query, Request, UseGuards, UseInterceptors, UsePipes } from "@nestjs/common";
+import { JwtService } from "@nestjs/jwt";
+// import { UsersService } from "src/features/user/application/users.service";
+// import { RefreshGuard } from "src/utilit/guards/refresh-auth-guard";
+// import { LoggingInterceptor } from "src/utilit/interceptors/login-inte";
+// import { JwtAuthGuardPassport } from "src/utilit/strategies/jwt-auth-strategies";
+import { RefreshGuard } from "../../../utilit/guards/refresh-auth-guard";
+import { LoggingInterceptor } from "../../../utilit/interceptors/login-inte";
+import { JwtAuthGuardPassport } from "../../../utilit/strategies/jwt-auth-strategies";
+import { UsersService } from "../../user/application/users.service";
+import { DefaultValuesPipe } from "../blogs/dto/dto.query.body";
+import { BlogsQueryRepository } from "../blogs/infrastructure/blogs.query-repository";
+import { CommentsQueryRepository } from "../comments/infrastructure/comments-query-repository";
+import { CommentsQuerySqlRepository } from "../comments/infrastructure/comments.sql.query.repository";
 import { PostsService } from "./application/posts.service";
 import { PostsQueryRepository } from "./infrastructure/posts.query-repository";
-import { PostsCreateModel } from "./models/input/create-posts.input.bodel";
-import { QueryPostsParamsDto } from "./models/input/query-posts.input";
+import { PostsQuerySqlRepository } from './infrastructure/posts.query.sql-repository';
 import { CommentPosts } from "./models/input/create-comments.input.model";
-import { JwtService } from "@nestjs/jwt";
-import { CommentsQueryRepository } from "../comments/infrastructure/comments-query-repository";
-import { JwtAuthGuardPassport } from "src/utilit/strategies/jwt-auth-strategies";
-import { RefreshGuard } from "src/utilit/guards/refresh-auth-guard";
-import { BlogsQueryRepository } from "../blogs/infrastructure/blogs.query-repository";
-import { AuthGuard } from "src/utilit/guards/basic-auth-guards";
-import { LoggingInterceptor } from "src/utilit/interceptors/login-inte";
-import { PutLikeComment } from "../comments/models/input/put-like-comments.input.mode;";
-import { UsersService } from "src/features/user/application/users.service";
-import { DefaultValuesPipe } from "../blogs/dto/dto.query.body";
-import { JwtAuthGuard } from "src/utilit/guards/jwt-auth-guards";
+import { QueryPostsParamsDto } from "./models/input/query-posts.input";
 
 
 
@@ -25,7 +26,7 @@ import { JwtAuthGuard } from "src/utilit/guards/jwt-auth-guards";
 
 @Controller('posts')
 export class PostsController {
-    constructor(protected postsService: PostsService, protected postsQueryRepository: PostsQueryRepository, protected blogsQueryRepository: BlogsQueryRepository, protected jwtService: JwtService, protected usersService: UsersService, protected commentsQueryRepository: CommentsQueryRepository, protected postsQuerySqlRepository:PostsQuerySqlRepository) { }
+    constructor(protected postsService: PostsService, protected postsQueryRepository: PostsQueryRepository, protected blogsQueryRepository: BlogsQueryRepository, protected jwtService: JwtService, protected usersService: UsersService, protected commentsQueryRepository: CommentsQueryRepository, protected postsQuerySqlRepository: PostsQuerySqlRepository, protected commentsQuerySqlRepository: CommentsQuerySqlRepository) { }
 
     // @Post("")
     // @UseGuards(AuthGuard)
@@ -45,51 +46,51 @@ export class PostsController {
     //     return await this.postsQueryRepository.getById(postId)
     // }
 
-    // @Post("/:id/comments")
-    // @UseGuards(JwtAuthGuardPassport, RefreshGuard)// Это единсвтенное место где я использую passportJwt
-    // @HttpCode(201)
-    // async creatComments(@Body() commentPosts: CommentPosts, @Param("id") id: string, @Request() req) {
-    //     const post = await this.postsQueryRepository.getById(id);
+    @Post("/:id/comments")
+    @UseGuards(JwtAuthGuardPassport, RefreshGuard)// Это единсвтенное место где я использую passportJwt
+    @HttpCode(201)
+    async creatComments(@Body() commentPosts: CommentPosts, @Param("id") id: string, @Request() req) {
+        const post = await this.postsQuerySqlRepository.getById(id);
 
 
 
-    //     if (!post) {
-    //         throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+        if (!post) {
+            throw new HttpException('User not found', HttpStatus.NOT_FOUND);
 
-    //     }
+        }
 
-    //     const resulComment = await this.postsService.createCommentPost(commentPosts.content, req.user, post.id);
+        const resulComment = await this.postsService.createCommentPost(commentPosts.content, req.user, post.id);
 
-    //     return resulComment
-    // }
+        return resulComment
+    }
 
-    // @Get("/:id/comments")
-    // @HttpCode(200)
-    // async getComments(@Param("id") id: string, @Query(new DefaultValuesPipe()) qurePagination: QueryPostsParamsDto, @Request() req,) {
-    //     let payload
-    //     try {
-    //         const res = req.headers.authorization.split(' ')[1]
-    //         payload = this.jwtService.verify(res)
-    //     } catch (error) {
-    //         console.log(error)
-    //     }
+    @Get("/:id/comments")
+    @HttpCode(200)
+    async getComments(@Param("id") id: string, @Query(new DefaultValuesPipe()) qurePagination: QueryPostsParamsDto, @Request() req,) {
+        let payload
+        try {
+            const res = req.headers.authorization.split(' ')[1]
+            payload = this.jwtService.verify(res)
+        } catch (error) {
+            console.log(error)
+        }
 
-    //     const userId = payload ? payload.userId : "null"
-
-
-    //     const post = await this.postsQueryRepository.getById(id);
-
-    //     if (!post) {
-    //         throw new HttpException('User not found', HttpStatus.NOT_FOUND);
-    //     }
+        const userId = payload ? payload.userId : "null"
 
 
+        const post = await this.postsQuerySqlRepository.getById(id);
 
-    //     const commetns = await this.commentsQueryRepository.getCommentPosts(post.id, qurePagination, userId);
+        if (!post) {
+            throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+        }
 
-    //     return commetns
 
-    // }
+
+        const commetns = await this.commentsQuerySqlRepository.getCommentPosts(post.id, qurePagination, userId);
+
+        return commetns
+
+    }
 
 
     @Get("")

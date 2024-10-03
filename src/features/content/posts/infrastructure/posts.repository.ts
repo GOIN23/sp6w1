@@ -1,13 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { Posts } from '../domain/posts.entity';
-import { PostViewModelLiKeArray } from '../type/typePosts';
-import { PostsCreateModel } from '../models/input/create-posts.input.bodel';
-import { CommentViewModelDb, PostLikeT } from 'src/features/content/comments/type/typeCommen';
-import { LikesPostInfo } from '../domain/likes-posts.entity';
 import { Comments } from '../../comments/domain/comments.entity';
 import { LikesCommentsInfo } from '../../comments/domain/likes.entity';
+import { CommentViewModelDb, PostLikeT } from '../../comments/type/typeCommen';
+import { LikesPostInfo } from '../domain/likes-posts.entity';
+import { Posts } from '../domain/posts.entity';
+import { PostsCreateModel } from '../models/input/create-posts.input.bodel';
+import { PostViewModelLiKeArray } from '../type/typePosts';
 
 
 @Injectable()
