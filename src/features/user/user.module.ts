@@ -1,7 +1,6 @@
 import { forwardRef, Module, Provider } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
 import { MongooseModule } from '@nestjs/mongoose';
-import { UtilitModule } from '../../utilit/utitli.module';
 import { AuthModule } from '../auth/auth.module';
 import { CreateUserUseCase } from './application/use-case/create-use-case';
 import { GetUserUseCase } from './application/use-case/get-use-case';
@@ -26,7 +25,7 @@ const useCaseUser = [CreateUserUseCase, GetUserUseCase]
     imports: [
         MongooseModule.forFeature([
             { name: User.name, schema: UserSchema }
-        ]), CqrsModule, UtilitModule,
+        ]), CqrsModule,
         forwardRef(() => AuthModule)
     ],
     controllers: [UsersController],

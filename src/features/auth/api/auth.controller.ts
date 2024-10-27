@@ -35,7 +35,6 @@ export class AuthController {
         res.cookie('refreshToken', token.refreshToken, {
             httpOnly: true, // Доступно только по HTTP(S), недоступно через JavaScript
             secure: true, // Установите в true, если используете HTTPS
-            sameSite: 'strict', // Защищает от CSRF
             maxAge: 30 * 24 * 60 * 60 * 1000, // Пример: 30 дней
         });
 
@@ -45,7 +44,12 @@ export class AuthController {
     @HttpCode(204)
     async logout(@Request() req) {
 
+        console.log("aliiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii")
         const result = await this.authService.checkRefreshToken(req.cookies.refreshToken)
+
+
+
+
 
 
         if (!result) {

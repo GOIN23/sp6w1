@@ -1,9 +1,8 @@
-import { Length } from 'class-validator';
 import { Injectable } from "@nestjs/common";
 import { DataSource } from "typeorm";
+import { PaginatorUsers, UserViewModel2 } from "../../../utilit/TYPE/typeUser";
+import { QueryParamsDto } from "../../../utilit/dto/dto.query.user";
 import { UserOutputModel, UserOutputModelMapper } from '../models/output/user.output.model';
-import { PaginatorUsers, UserViewModel2, UserViewModelConfidential } from "../../../utilit/TYPE/typeUser"
-import { QueryParamsDto } from "../../../utilit/dto/dto.query.user"
 @Injectable()
 export class UsersSqlQueryRepository {
     constructor(protected dataSource: DataSource) {
@@ -33,6 +32,7 @@ export class UsersSqlQueryRepository {
     }
 
     async getUsers(query: QueryParamsDto): Promise<PaginatorUsers | { error: string }> {
+        debugger
 
         const sortBy = query.sortBy || 'created_at'; // по умолчанию сортировка по 'login'
 
@@ -42,7 +42,7 @@ export class UsersSqlQueryRepository {
         SELECT *
         FROM users
         WHERE (LOWER(email) LIKE LOWER(CONCAT('%', $1::TEXT, '%')) OR $1 IS NULL)
-          OR (LOWER(login) LIKE LOWER(CONCAT('%', $2::TEXT, '%')) OR $2 IS NULL)
+          AND (LOWER(login) LIKE LOWER(CONCAT('%', $2::TEXT, '%')) OR $2 IS NULL)
         ORDER BY ${sortBy} COLLATE "C" ${sortDirection} 
         LIMIT $3 OFFSET $4;
     `;
@@ -67,7 +67,7 @@ export class UsersSqlQueryRepository {
         SELECT COUNT(*)
         FROM users
         WHERE (LOWER(email) LIKE LOWER(CONCAT('%', $1::TEXT, '%')) OR $1 IS NULL)
-          OR (LOWER(login) LIKE LOWER(CONCAT('%', $2::TEXT, '%')) OR $2 IS NULL);
+          AND (LOWER(login) LIKE LOWER(CONCAT('%', $2::TEXT, '%')) OR $2 IS NULL);
     `;
         const countParams = [query.searchEmailTerm || '', query.searchLoginTerm || ''];
         const totalItemsResult = await this.dataSource.query(countQuery, countParams);

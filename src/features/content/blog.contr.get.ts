@@ -46,7 +46,7 @@ export class BlogsControllerGet {
             console.log(error)
         }
 
-        const userId = payload ? payload.userId : "null"
+        const userId = payload ? payload.userId : null
 
         const blog = await this.blogsSqlQueryRepository.getById(id,)
 

@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
 
+import { UsersSqlRepository } from '../../../user/infrastructure/users.sql.repository';
 import { BlogOutputModel } from '../../blogs/models/output/blog.output.model';
-import { CommentLikeT, CommentViewModelDb } from '../../comments/type/typeCommen';
+import { CommentViewModelDb } from '../../comments/type/typeCommen';
 import { PostRepository } from "../infrastructure/posts.repository";
 import { PostSqlRepository } from '../infrastructure/posts.sql.repository';
 import { PostsCreateModel } from "../models/input/create-posts.input.bodel";
@@ -10,7 +11,7 @@ import { statusCommentLike } from "../type/typePosts";
 
 @Injectable()
 export class PostsService {
-    constructor(private postRepository: PostRepository, protected postSqlRepository: PostSqlRepository) { }
+    constructor(private postRepository: PostRepository, protected postSqlRepository: PostSqlRepository, protected usersSqlRepository: UsersSqlRepository) { }
 
     async creatPosts(postsModel: PostsCreateModel, blog: BlogOutputModel) {
 
@@ -32,6 +33,21 @@ export class PostsService {
         }
         return await this.postSqlRepository.creatInDbPost(newUser)
 
+
+
+        // const likeInfoMetaData: any = {
+        //     //@ts-ignore
+        //     postId: postId,
+        //     createdAt: new Date().toISOString(),
+        //     status: statusCommentLike.None,
+        //     userID: user.userId,
+        //     userLogin: user.login
+        // };
+
+
+        // await this.postSqlRepository.createLikeInfoMetaDataComment(likeInfoMetaData);
+
+
     }
 
     async updatePost(id: string, postsModel: PostsCreateModel) {
@@ -48,7 +64,7 @@ export class PostsService {
         const newCommentPosts: CommentViewModelDb = {
             content: content,
             commentatorInfo: {
-                userId: user.userId,
+                userId: `${user.userId}`,
                 userLogin: user.login,
             },
             createdAt: new Date().toISOString(),
@@ -59,12 +75,6 @@ export class PostsService {
             },
             IdPost,
         };
-
-        type CommentWithouId = Omit<CommentLikeT, '_id'>;
-
-
-
-
 
 
 
@@ -94,7 +104,7 @@ export class PostsService {
     }
 
     async updatePostsLikeDeslike(likeStatus: statusCommentLike, postId: string, userId: string, userLogin: string) {
-        const fintLikeDislake = await this.postRepository.findLikeDislakePost(userId, postId);
+        const fintLikeDislake = await this.postSqlRepository.findLikeDislakePost(userId, postId);
         if (!fintLikeDislake) {
             const likeInfoMetaData: any = {
                 postId: postId,
@@ -104,11 +114,11 @@ export class PostsService {
                 login: userLogin
             };
 
-            await this.postRepository.addLikeDislikeInPosts(likeInfoMetaData);
+            await this.postSqlRepository.addLikeDislikeInPosts(likeInfoMetaData);
             return;
         }
 
-        await this.postRepository.updateLikeStatusInPosts(userId, likeStatus, postId);
+        await this.postSqlRepository.updateLikeStatusInPosts(userId, likeStatus, postId);
     }
 
 }

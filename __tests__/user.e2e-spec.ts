@@ -9,6 +9,17 @@ import { EmailAdapterMock } from "./mock/email.adapter.mock";
 import { aDescribe } from "./utils/aDescribe";
 import { skipSettings } from "./utils/skip-settings";
 import { UsersTestManager } from "./utils/users-test-manager";
+
+
+
+
+
+
+
+
+
+
+
 export const ADMIN_AUTH = "admin:qwerty"; // get from SETTINGS
 const buff2 = Buffer.from(ADMIN_AUTH, "utf8");
 let codedAuth: string = buff2.toString("base64");
@@ -60,7 +71,7 @@ aDescribe(skipSettings.for('userTest'))("user test", () => {
     });
 
     it("- GET unauthorized request = []", async () => {
-        const resultExpext = { statusCode: 401, path: '/api/users' }
+        const resultExpext = { statusCode: 401, path: '/api/sa/users' }
         const authenticatioInformation = { Authorization: "Basic " + "ne correct" }
 
         await userTestManger.getUsers(resultExpext, 401, authenticatioInformation)
@@ -155,6 +166,7 @@ aDescribe(skipSettings.for('userTest'))("user test", () => {
         const users = await userTestManger.createUsers(3)
         await userTestManger.getUsers(users.body, 200, authenticatioInformation)
 
+        console.log(users.body.items[0], 'users.body.itemsusers.body.itemsusers.body.itemsusers.body.itemsusers.body.items')
 
         users.body.items.reverse()
         await userTestManger.comparisonQueriesByQuery({ searchLoginTerm: "adsm0mma" }, {
@@ -203,5 +215,7 @@ aDescribe(skipSettings.for('userTest'))("user test", () => {
         }
 
         await userTestManger.getUsers(resultExpext, 200, authenticatioInformation)
+
     });
 })
+

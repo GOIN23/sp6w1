@@ -1,10 +1,21 @@
-import { Global, Module } from "@nestjs/common";
+import { Global, Module, Provider } from "@nestjs/common";
+import { CqrsModule } from "@nestjs/cqrs";
 import { JwtModule } from "@nestjs/jwt";
+import { AuthGuard } from "./guards/basic-auth-guards";
+import { JwtAuthGuard } from "./guards/jwt-auth-guards";
+import { LoggingInterceptor } from "./interceptors/login-inte";
+import { NumberPipe } from "./pipe/number.pipe";
 
 
 
 
 
+
+
+
+const gurd: Provider[] = [AuthGuard, JwtAuthGuard]
+const interceprot: Provider[] = [LoggingInterceptor]
+const pipe: Provider[] = [NumberPipe]
 
 
 
@@ -14,8 +25,10 @@ import { JwtModule } from "@nestjs/jwt";
         JwtModule.register({
             secret: 'your_secret_key', // Замените на ваш секретный ключ
             signOptions: { expiresIn: '6m' }, // Время жизни токена (например, 1 час)
-        })
+        }),
+        CqrsModule,
     ],
-    exports: [JwtModule]
+    providers: [...gurd, ...interceprot, ...pipe],
+    exports: [JwtModule, CqrsModule, ...gurd, ...interceprot, ...pipe]
 })
 export class CoreModule { }

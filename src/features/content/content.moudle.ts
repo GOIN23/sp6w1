@@ -1,9 +1,6 @@
 import { Module, Provider } from "@nestjs/common";
-import { CqrsModule } from "@nestjs/cqrs";
-import { JwtModule } from "@nestjs/jwt";
 import { MongooseModule } from "@nestjs/mongoose";
 import { NameIsExistConstraint } from "../../utilit/decorators/transform/blogFind";
-import { UtilitModule } from "../../utilit/utitli.module";
 import { AuthModule } from "../auth/auth.module";
 import { UserModule } from "../user/user.module";
 import { BlogsControllerGet } from "./blog.contr.get";
@@ -23,6 +20,7 @@ import { Comments, CommentSchema } from "./comments/domain/comments.entity";
 import { LikesCommentsInfo, LikesCommentsSchema } from "./comments/domain/likes.entity";
 import { CommentsQueryRepository } from "./comments/infrastructure/comments-query-repository";
 import { CommentsRepository } from "./comments/infrastructure/comments-repository";
+import { CommentsSqlRepository } from "./comments/infrastructure/comments-sql-repository";
 import { CommentsQuerySqlRepository } from "./comments/infrastructure/comments.sql.query.repository";
 import { PostsService } from "./posts/application/posts.service";
 import { LikesPostInfo, LLikesPostInfoSchema } from "./posts/domain/likes-posts.entity";
@@ -39,12 +37,12 @@ const blogsProvides: Provider[] = [BlogService, BlogRepository, BlogsQueryReposi
 
 
 const postsProvedis: Provider[] = [PostsService, PostsQueryRepository, PostRepository, PostSqlRepository, PostsQuerySqlRepository]
-const commentsProvides: Provider[] = [CommentsService, CommentsQueryRepository, CommentsRepository, CommentsQuerySqlRepository]
+const commentsProvides: Provider[] = [CommentsService, CommentsQueryRepository, CommentsRepository, CommentsQuerySqlRepository, CommentsSqlRepository]
 const useCaseComment: Provider[] = [DeleteeCommentrUseCase, updateCommentUseCase, UpdateLikeDislikeOnCommentUseCase]
 
 
 @Module({
-    imports: [MongooseModule.forFeature([{ name: Blog.name, schema: BlogSchema }, { name: Posts.name, schema: PostSchema }, { name: LikesCommentsInfo.name, schema: LikesCommentsSchema }, { name: LikesPostInfo.name, schema: LLikesPostInfoSchema }, { name: Comments.name, schema: CommentSchema }]), AuthModule, CqrsModule, UtilitModule, JwtModule, UserModule],
+    imports: [MongooseModule.forFeature([{ name: Blog.name, schema: BlogSchema }, { name: Posts.name, schema: PostSchema }, { name: LikesCommentsInfo.name, schema: LikesCommentsSchema }, { name: LikesPostInfo.name, schema: LLikesPostInfoSchema }, { name: Comments.name, schema: CommentSchema }]), AuthModule, UserModule],
     controllers: [BlogsController, PostsController, CommentsController, BlogsControllerGet],
     providers: [...blogsProvides, ...postsProvedis, ...commentsProvides, ...useCaseComment],
 

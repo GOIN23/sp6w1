@@ -1,12 +1,13 @@
 import { Injectable } from "@nestjs/common";
 import { DataSource } from "typeorm";
+import { PostsQuerySqlRepository } from "../../posts/infrastructure/posts.query.sql-repository";
 import { QueryBlogsParamsDto } from "../dto/dto.query.body";
 import { BlogViewModelDbT } from "../TYPE/typeBlog";
 
 
 @Injectable()
 export class BlogsSqlQueryRepository {
-    constructor(protected dataSource: DataSource) {
+    constructor(protected dataSource: DataSource, protected postsQuerySqlRepository: PostsQuerySqlRepository) {
     }
 
     async getById(blogId: string) {
@@ -30,7 +31,6 @@ export class BlogsSqlQueryRepository {
 
 
         } catch (error) {
-
             console.log(error)
         }
     }
@@ -145,23 +145,7 @@ export class BlogsSqlQueryRepository {
 
         const items = await this.dataSource.query(queryuUserTable, parametr)
 
-        const userMapData: BlogViewModelDbT[] = items.map((post: any) => {
-            return {
-                id: post.post_id.toString(),
-                title: post.title,
-                shortDescription: post.short_description,
-                content: post.content,
-                createdAt: post.created_at,
-                blogName: post.blog_name,
-                blogId: post.fk_blog.toString(),
-                extendedLikesInfo: {
-                    likesCount: 0,
-                    dislikesCount: 0,
-                    myStatus: "None",
-                    newestLikes: []
-                }
-            };
-        });
+        const userMapData: any[] = await this.postsQuerySqlRepository.mapPosts(items, userId)
 
 
         const countQuery = `

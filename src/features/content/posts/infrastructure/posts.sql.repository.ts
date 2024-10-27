@@ -4,7 +4,7 @@ import { PostsCreateModel } from '../models/input/create-posts.input.bodel';
 import { PostViewModelLiKeArray } from '../type/typePosts';
 
 import { DataSource } from 'typeorm';
-import { CommentViewModelDb } from '../../comments/type/typeCommen';
+import { CommentViewModelDb, PostLikeT } from '../../comments/type/typeCommen';
 
 
 @Injectable()
@@ -63,14 +63,15 @@ export class PostSqlRepository {
         }
 
     }
+
     async createCommentPost(body: CommentViewModelDb): Promise<void> {
         const queryCommentsTable = ` 
-        INSERT INTO comments (content, created_at, post_id_fk)
-        VALUES($1, $2, $3)
+        INSERT INTO comments (content, created_at, post_id_fk, user_fk_id)
+        VALUES($1, $2, $3, $4)
         RETURNING comments_id
         `
 
-        const parameter = [body.content, body.createdAt, body.IdPost]
+        const parameter = [body.content, body.createdAt, body.IdPost, body.commentatorInfo.userId]
 
 
         try {
@@ -88,7 +89,7 @@ export class PostSqlRepository {
 
     async createLikeInfoMetaDataComment(body: any): Promise<void> {
         const queryLikesInfosTable = ` 
-        INSERT INTO likes_info_comments (user_fk_id, comments_fk_id, created_at, status, user_login)
+        INSERT INTO likes_info_comments (user_fk_id, comments_fk_id, created_at_info, status, user_login)
         VALUES($1, $2, $3, $4, $5)
         `
 
@@ -102,23 +103,55 @@ export class PostSqlRepository {
 
     }
 
-    // async findLikeDislakePost(userID: string, postId: string): Promise<PostLikeT | boolean> {
-    //     try {
-    //         const res = await this.likesPostModule.findOne({ userID: userID, postId: postId });
-    //         if (!res) {
-    //             return false;
-    //         }
-    //         return true;
-    //     } catch {
-    //         return false
+    async findLikeDislakePost(userID: string, postId: string): Promise<PostLikeT | boolean> {
+        const queryPosts = `
+        SELECT *
+        FROM likes_info_posts 
+        WHERE post_fk_id = $1 AND user_fk_id = $2
+      `
 
-    //     }
+        const parametr = [postId, userID]
 
-    // }
-    // async addLikeDislikeInPosts(likesPostInfo: any) {
-    //     await this.likesPostModule.insertMany(likesPostInfo);
-    // }
-    // async updateLikeStatusInPosts(userId: string, likeStatus: string, postId: string) {
-    //     await this.likesPostModule.updateOne({ userID: userId, postId: postId }, { $set: { status: likeStatus } });
-    // }
+        try {
+            const result = await this.dataSource.query(queryPosts, parametr)
+
+            return result[0]
+        } catch (error) {
+            console.log(error)
+
+        }
+
+    }
+    async addLikeDislikeInPosts(likesPostInfo: any) {
+        const queryLikesInfosTablePost = ` 
+        INSERT INTO likes_info_posts (post_fk_id, status, user_fk_id, user_login,created_at_inf)
+        VALUES($1, $2, $3, $4, $5)
+        `
+
+        const parameterLikesInfo = [likesPostInfo.postId, likesPostInfo.status, likesPostInfo.userID, likesPostInfo.login, likesPostInfo.createdAt]
+        try {
+            await this.dataSource.query(queryLikesInfosTablePost, parameterLikesInfo)
+
+        } catch (error) {
+            console.log(error)
+        }
+
+
+    }
+    async updateLikeStatusInPosts(userId: string, likeStatus: string, postId: string) {
+        const queryuPostTable = `
+        UPDATE likes_info_posts
+        SET status = $1
+        WHERE user_fk_id = $2 AND post_fk_id = $3;
+    `;
+        const parameter = [likeStatus, userId, postId]
+
+        try {
+            await this.dataSource.query(queryuPostTable, parameter)
+
+        } catch (error) {
+            console.log(error)
+
+        }
+    }
 }

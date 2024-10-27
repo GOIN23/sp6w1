@@ -53,7 +53,7 @@ export class UsersAuthService {
     async login(user: any) {
         const deviceId: string = new ObjectId().toString()
         const payload = { userLogin: user.login, userId: user.userId, deviceId: deviceId };
-        const tokens = { accessToken: this.jwtService.sign(payload), refreshToken: this.jwtService.sign(payload, { expiresIn: "5m" }) }
+        const tokens = { accessToken: this.jwtService.sign(payload), refreshToken: this.jwtService.sign(payload, { expiresIn: "6m" }) }
 
         const userSession: DeviceSesions = {
             userId: user.userId,
@@ -159,6 +159,7 @@ export class UsersAuthService {
         return res;
     }
     async checkRefreshToken(refreshToken: string) {
+        console.log(refreshToken, "aliiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii")
 
         try {
             const result: any = await this.jwtService.verify(refreshToken);
@@ -168,7 +169,6 @@ export class UsersAuthService {
             if (!checkSesionshToken) {
                 return null;
             }
-            //@ts-ignore
             if (result.iat < checkSesionshToken!.last_active_date) {
                 return null;
             }
@@ -182,7 +182,7 @@ export class UsersAuthService {
 
         const body = { userLogin: payload.userLogin, userId: payload.userId, deviceId: payload.deviceId };
 
-        const tokens = { accessToken: this.jwtService.sign(body), refreshToken: this.jwtService.sign(body, { expiresIn: "20s" }) }
+        const tokens = { accessToken: this.jwtService.sign(body), refreshToken: this.jwtService.sign(body, { expiresIn: "6m" }) }
 
 
         await this.sesionsService.updateSesion(this.jwtService.decode(tokens.refreshToken).iat, payload.userId, payload.deviceId);

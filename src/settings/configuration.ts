@@ -1,6 +1,6 @@
-import { DbSettings } from './db-settings';
 import { ValidateNested, validateSync } from "class-validator";
 import { ApiSettings } from "./apiSettings";
+import { DbSettings } from './db-settings';
 import { EnvironmentSettings } from "./env-setings";
 
 
@@ -32,21 +32,21 @@ export class Configuration {
             apiSettings: new ApiSettings(environmentVariables),
             dbSettings: new DbSettings(environmentVariables),
             environmentSettings: new EnvironmentSettings(environmentVariables),
-            
+
 
             // Другие настройки...
         });
     }
 }
 
-// export function validate(environmentVariables: Record<string, string>) {
-//     const config = Configuration.createConfig(environmentVariables);
-//     const errors = validateSync(config, { skipMissingProperties: false });
-//     if (errors.length > 0) {
-//         throw new Error(errors.toString());
-//     }
-//     return config;
-// }
+export function validate(environmentVariables: Record<string, string>) {
+    const config = Configuration.createConfig(environmentVariables);
+    const errors = validateSync(config, { skipMissingProperties: false });
+    if (errors.length > 0) {
+        throw new Error(errors.toString());
+    }
+    return config;
+}
 
 export default () => {
     const environmentVariables = process.env as EnvironmentVariable;
@@ -54,3 +54,4 @@ export default () => {
     console.log('process.env.ENV =', environmentVariables.ENV);
     return Configuration.createConfig(environmentVariables);
 };
+

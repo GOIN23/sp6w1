@@ -1,9 +1,9 @@
 import { BadRequestException, INestApplication, ValidationPipe, } from '@nestjs/common';
-import { HttpAdapterHost } from '@nestjs/core';
 import { useContainer } from 'class-validator';
+import * as cookieParser from 'cookie-parser';
 import { AppModule } from '../app.module';
-import { AllExceptionsFilter } from "../utilit/exception-filters/http-exception-filter"
-import { LoggingInterceptor } from "../utilit/interceptors/login-inte"
+import { AllExceptionsFilter } from "../utilit/exception-filters/http-exception-filter";
+import { LoggingInterceptor } from "../utilit/interceptors/login-inte";
 
 // Префикс нашего приложения (http://site.com/api)
 const APP_PREFIX = '/api';
@@ -23,8 +23,7 @@ export const applyAppSettings = (app: INestApplication) => {
     // Установка префикса
     setAppPrefix(app);
 
-
-    // Применение глобальных pipes
+    app.use(cookieParser())
     setAppPipes(app);
 
     // Применение глобальных exceptions filters

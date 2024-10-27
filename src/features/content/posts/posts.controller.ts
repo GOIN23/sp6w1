@@ -1,10 +1,10 @@
-import { Body, Controller, Get, HttpCode, HttpException, HttpStatus, Param, Post, Query, Request, UseGuards, UseInterceptors, UsePipes } from "@nestjs/common";
+import { Body, Controller, Get, HttpCode, HttpException, HttpStatus, Param, Post, Put, Query, Request, UseGuards, UseInterceptors, UsePipes } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 // import { UsersService } from "src/features/user/application/users.service";
 // import { RefreshGuard } from "src/utilit/guards/refresh-auth-guard";
 // import { LoggingInterceptor } from "src/utilit/interceptors/login-inte";
 // import { JwtAuthGuardPassport } from "src/utilit/strategies/jwt-auth-strategies";
-import { RefreshGuard } from "../../../utilit/guards/refresh-auth-guard";
+import { JwtAuthGuard } from "../../../utilit/guards/jwt-auth-guards";
 import { LoggingInterceptor } from "../../../utilit/interceptors/login-inte";
 import { JwtAuthGuardPassport } from "../../../utilit/strategies/jwt-auth-strategies";
 import { UsersService } from "../../user/application/users.service";
@@ -12,6 +12,7 @@ import { DefaultValuesPipe } from "../blogs/dto/dto.query.body";
 import { BlogsQueryRepository } from "../blogs/infrastructure/blogs.query-repository";
 import { CommentsQueryRepository } from "../comments/infrastructure/comments-query-repository";
 import { CommentsQuerySqlRepository } from "../comments/infrastructure/comments.sql.query.repository";
+import { PutLikeComment } from "../comments/models/input/put-like-comments.input.mode;";
 import { PostsService } from "./application/posts.service";
 import { PostsQueryRepository } from "./infrastructure/posts.query-repository";
 import { PostsQuerySqlRepository } from './infrastructure/posts.query.sql-repository';
@@ -46,12 +47,11 @@ export class PostsController {
     //     return await this.postsQueryRepository.getById(postId)
     // }
 
-    @Post("/:id/comments")
-    @UseGuards(JwtAuthGuardPassport, RefreshGuard)// Это единсвтенное место где я использую passportJwt
+    @Post("/:postId/comments")
+    @UseGuards(JwtAuthGuardPassport)// Это единсвтенное место где я использую passportJwt
     @HttpCode(201)
-    async creatComments(@Body() commentPosts: CommentPosts, @Param("id") id: string, @Request() req) {
+    async creatComments(@Body() commentPosts: CommentPosts, @Param("postId") id: string, @Request() req) {
         const post = await this.postsQuerySqlRepository.getById(id);
-
 
 
         if (!post) {
@@ -75,10 +75,10 @@ export class PostsController {
             console.log(error)
         }
 
-        const userId = payload ? payload.userId : "null"
+        const userId = payload ? payload.userId : null
 
 
-        const post = await this.postsQuerySqlRepository.getById(id);
+        const post = await this.postsQuerySqlRepository.getById(id, userId);
 
         if (!post) {
             throw new HttpException('User not found', HttpStatus.NOT_FOUND);
@@ -91,7 +91,6 @@ export class PostsController {
         return commetns
 
     }
-
 
     @Get("")
     @UseInterceptors(LoggingInterceptor)
@@ -106,7 +105,7 @@ export class PostsController {
             console.log(error)
         }
 
-        const userId = payload ? payload.userId : "null"
+        const userId = payload ? payload.userId : null
 
         const posts = await this.postsQuerySqlRepository.getPosts(qurePagination, userId)
 
@@ -125,7 +124,7 @@ export class PostsController {
             console.log(error)
         }
 
-        const userId = payload ? payload.userId : "null"
+        const userId = payload ? payload.userId : null
 
         const posts = await this.postsQuerySqlRepository.getById(id, userId)
 
@@ -139,21 +138,23 @@ export class PostsController {
 
     }
 
-    // @Put("/:id/like-status")
-    // @UseGuards(JwtAuthGuard, RefreshGuard)
-    // @HttpCode(204)
-    // async putLikeStatusPosts(@Param("id") id: string, @Body() likeStatusModel: PutLikeComment, @Request() req) {
-
-    //     const posts = await this.postsQueryRepository.getById(id)
-
-    //     if (!posts) {
-    //         throw new HttpException('Posts not found', HttpStatus.NOT_FOUND);
-    //     }
-
-    //     await this.postsService.updatePostsLikeDeslike(likeStatusModel.likeStatus, id, req.user.userId || "null", req.user.userLogin || "null");
+    @Put("/:id/like-status")
+    @UseGuards(JwtAuthGuard)
+    @HttpCode(204)
+    async putLikeStatusPosts(@Param("id") id: string, @Body() likeStatusModel: PutLikeComment, @Request() req) {
 
 
-    // }
+        const posts = await this.postsQuerySqlRepository.getById(id)
+
+
+        if (!posts) {
+            throw new HttpException('Posts not found', HttpStatus.NOT_FOUND);
+        }
+
+        await this.postsService.updatePostsLikeDeslike(likeStatusModel.likeStatus, id, req.user.userId, req.user.userLogin);
+
+
+    }
 
 
     // @Put("/:id")

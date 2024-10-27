@@ -61,7 +61,8 @@ export class BlogsController {
             console.log(error)
         }
 
-        const userId = payload ? payload.userId : "null"
+
+        const userId = payload ? payload.userId : null
 
 
         return await this.postsQuerySqlRepository.getById(postId, userId)
@@ -97,15 +98,16 @@ export class BlogsController {
     async getBlogByIdPosts(@Param("id") id: string, @Query(new DefaultValuesPipe()) qurePagination: QueryBlogsParamsDto, @Request() req) {
         let payload
         try {
+
             const res = req.headers.authorization.split(' ')[1]
             payload = this.jwtService.verify(res)
         } catch (error) {
             console.log(error)
         }
 
-        const userId = payload ? payload.userId : "null"
+        const userId = payload ? payload.userId : null
 
-        const blog = await this.blogsSqlQueryRepository.getById(id,)
+        const blog = await this.blogsSqlQueryRepository.getById(id)
 
 
 

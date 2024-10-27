@@ -1,13 +1,14 @@
-import { Body, Controller, Delete, ForbiddenException, Get, Headers, HttpCode, HttpException, HttpStatus, Param, Post, Put, Query, Request, UseGuards } from "@nestjs/common";
-import { CommentsQueryRepository } from "../infrastructure/comments-query-repository";
-import { JwtService } from "@nestjs/jwt";
-import { JwtAuthGuard } from "../../../../utilit/guards/jwt-auth-guards"
-import { CommentPosts } from "../../posts/models/input/create-comments.input.model"
+import { Body, Controller, Delete, ForbiddenException, Get, HttpCode, HttpException, HttpStatus, Param, Put, Request, UseGuards } from "@nestjs/common";
 import { CommandBus } from "@nestjs/cqrs";
-import { UpdateCommentCommand } from "../application/use-case/update-use-case";
+import { JwtService } from "@nestjs/jwt";
+import { JwtAuthGuard } from "../../../../utilit/guards/jwt-auth-guards";
+import { CommentPosts } from "../../posts/models/input/create-comments.input.model";
 import { DeleteCommentCommand } from "../application/use-case/delete-use-case";
-import { PutLikeComment } from "../models/input/put-like-comments.input.mode;";
+import { UpdateCommentCommand } from "../application/use-case/update-use-case";
 import { UpdateLIkeDeslikeCommentCommand } from "../application/use-case/updateLileOnComment-use-case";
+import { CommentsQueryRepository } from "../infrastructure/comments-query-repository";
+import { CommentsQuerySqlRepository } from "../infrastructure/comments.sql.query.repository";
+import { PutLikeComment } from "../models/input/put-like-comments.input.mode;";
 
 
 
@@ -17,12 +18,13 @@ import { UpdateLIkeDeslikeCommentCommand } from "../application/use-case/updateL
 
 @Controller('comments')
 export class CommentsController {
-    constructor(protected commentsQueryRepository: CommentsQueryRepository, protected jwtService: JwtService, private commandBuse: CommandBus) { }
+    constructor(protected commentsQueryRepository: CommentsQueryRepository, protected jwtService: JwtService, private commandBuse: CommandBus, protected commentsQuerySqlRepository: CommentsQuerySqlRepository) { }
 
 
     @Get("/:id")
     @HttpCode(200)
     async getByIdCommentst(@Param("id") id: string, @Request() req) {
+
         let payload
         try {
             const res = req.headers.authorization.split(' ')[1]
@@ -31,9 +33,9 @@ export class CommentsController {
             console.log(error)
         }
 
-        const userId = payload ? payload.userId : "null"
+        const userId = payload ? payload.userId : null
 
-        const comment = await this.commentsQueryRepository.getCommentById(id, userId)
+        const comment = await this.commentsQuerySqlRepository.getCommentById(id, userId)
 
         if (!comment) {
             throw new HttpException('comment not found', HttpStatus.NOT_FOUND);
@@ -41,14 +43,27 @@ export class CommentsController {
 
         return comment
 
+
     }
 
     @Put("/:id")
     @UseGuards(JwtAuthGuard)
     @HttpCode(204)
     async updateComment(@Param("id") id: string, @Body() commetModel: CommentPosts, @Request() req,) {
+        debugger
 
-        const comment = await this.commentsQueryRepository.getCommentById(id, req.user.userId || "null")
+
+
+        const res = await this.commentsQuerySqlRepository.complianceCheckUserComment(id, req.user.userId)
+
+
+        //@ts-ignore
+        if (res.error === 'Forbidden') {
+            throw new ForbiddenException();
+        }
+
+
+        const comment = await this.commentsQuerySqlRepository.getCommentById(id, req.user.userId)
 
         if (!comment) {
             throw new HttpException('comment not found', HttpStatus.NOT_FOUND);
@@ -56,13 +71,9 @@ export class CommentsController {
 
         }
 
-        if (comment.commentatorInfo.userId !== req.user.userId) {
-            throw new ForbiddenException();
-        }
+
 
         await this.commandBuse.execute(new UpdateCommentCommand(commetModel.content, id))
-
-
 
 
     }
@@ -71,22 +82,32 @@ export class CommentsController {
     @UseGuards(JwtAuthGuard)
     @HttpCode(204)
     async deleteCommentById(@Param("id") id: string, @Request() req) {
-        let userId: string
-        if (!req.user.userId) {
-            userId = "null";
+        debugger
+
+
+        const res = await this.commentsQuerySqlRepository.complianceCheckUserComment(id, req.user.userId)
+
+
+        if (res.error === 'Forbidden') {
+            throw new ForbiddenException();
         }
-        const comment = await this.commentsQueryRepository.getCommentById(id, userId)
+
+
+
+
+        const comment = await this.commentsQuerySqlRepository.getCommentById(id, req.user.userId)
 
         if (!comment) {
             throw new HttpException('comment not found', HttpStatus.NOT_FOUND);
 
         }
 
-        if (comment.commentatorInfo.userId !== req.user.userId) {
-            throw new ForbiddenException();
-        }
+
+
 
         await this.commandBuse.execute(new DeleteCommentCommand(id))
+
+
 
     }
 
@@ -95,11 +116,8 @@ export class CommentsController {
     @UseGuards(JwtAuthGuard)
     @HttpCode(204)
     async commentLikeStatus(@Param("id") id: string, @Body() likeCommentModel: PutLikeComment, @Request() req,) {
-        let userId: string = req.user.userId
-        if (!req.user.userId) {
-            userId = "null";
-        }
-        const comment = await this.commentsQueryRepository.getCommentById(id, userId)
+
+        const comment = await this.commentsQuerySqlRepository.findComment(id)
 
         if (!comment) {
             throw new HttpException('comment not found', HttpStatus.NOT_FOUND);
@@ -108,7 +126,8 @@ export class CommentsController {
         }
 
 
-        await this.commandBuse.execute(new UpdateLIkeDeslikeCommentCommand(likeCommentModel.likeStatus, id, userId))
+        //@ts-ignore
+        await this.commandBuse.execute(new UpdateLIkeDeslikeCommentCommand(likeCommentModel.likeStatus, id, req.user.userId, comment.user_login))
 
 
     }

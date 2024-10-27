@@ -1,3 +1,7 @@
+
+
+
+
 export const skipSettings = {
   run_all_tests: false,
 
@@ -18,4 +22,4 @@ export const skipSettings = {
   },
 };
 
-export type TestsNames = 'userTest';
+export type TestsNames = 'userTest' | 'authTest' | 'postsTest';

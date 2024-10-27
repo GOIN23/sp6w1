@@ -1,6 +1,7 @@
 import { CommandHandler, ICommandHandler } from "@nestjs/cqrs";
 
 import { CommentsRepository } from "../../infrastructure/comments-repository";
+import { CommentsSqlRepository } from "../../infrastructure/comments-sql-repository";
 
 
 export class UpdateCommentCommand {
@@ -14,10 +15,10 @@ export class UpdateCommentCommand {
 
 @CommandHandler(UpdateCommentCommand)
 export class updateCommentUseCase implements ICommandHandler<UpdateCommentCommand> {
-    constructor(protected commentsRepository:CommentsRepository,) { }
+    constructor(protected commentsRepository: CommentsRepository, protected commentsSqlRepository: CommentsSqlRepository) { }
 
     async execute(dtoInputDate: UpdateCommentCommand) {
-        await this.commentsRepository.updateComment(dtoInputDate)
+        await this.commentsSqlRepository.updateComment(dtoInputDate)
 
     }
 }

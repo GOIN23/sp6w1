@@ -17,13 +17,13 @@ export class UsersTestManager {
   async createUser(createModel: UserCreateModel, status: number, authenticatioInformation: any, expextResult?: any) {
     if (expextResult) {
       return request(this.app.getHttpServer())
-        .post('/api/users')
+        .post('/api/sa/users')
         .set(authenticatioInformation)
         .send(createModel)
         .expect(status, expextResult);
     }
     return request(this.app.getHttpServer())
-      .post('/api/users')
+      .post('/api/sa/users')
       .set(authenticatioInformation)
       .send(createModel)
       .expect(status);
@@ -32,7 +32,7 @@ export class UsersTestManager {
   async getUsers(expextResult: any, status: number, authenticatioInformation: any) {
 
     return request(this.app.getHttpServer())
-      .get('/api/users')
+      .get('/api/sa/users')
       .set(authenticatioInformation)
       .expect(status, expextResult)
       ;
@@ -48,7 +48,7 @@ export class UsersTestManager {
 
     for (let a = 0; a < counter; a++) {
       await request(this.app.getHttpServer())
-        .post('/api/users')
+        .post('/api/sa/users')
         .set({ Authorization: "Basic " + codedAuth })
         .send({
           email: `4e${a}.kn@mail.ru`,
@@ -58,7 +58,7 @@ export class UsersTestManager {
     }
 
     return request(this.app.getHttpServer())
-      .get("/api/users")
+      .get("/api/sa/users")
       .set({ Authorization: "Basic " + codedAuth })
 
 
@@ -66,7 +66,7 @@ export class UsersTestManager {
 
   async comparisonQueriesByQuery(query: any, expextResult: any) {
     await request(this.app.getHttpServer())
-      .get("/api/users")
+      .get("/api/sa/users")
       .set({ Authorization: "Basic " + codedAuth })
       .query(query)
       .expect(expextResult);
@@ -75,11 +75,10 @@ export class UsersTestManager {
 
   async deleteUser(id: number, status: number) {
     await request(this.app.getHttpServer())
-      .delete(`/api/users/${id}`)
+      .delete(`/api/sa/users/${id}`)
       .set({ Authorization: "Basic " + codedAuth })
       .expect(status);
   }
-
 
   static async login(
     app: INestApplication,

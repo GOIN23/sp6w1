@@ -1,30 +1,15 @@
-import { Global, MiddlewareConsumer, Module, NestModule, RequestMethod } from '@nestjs/common';
-
-import { User, UserSchema } from './features/user/domain/createdBy-user-Admin.entity';
-
-import { MongooseModule } from '@nestjs/mongoose';
-
-import { JwtModule } from '@nestjs/jwt';
-
-import { RecoveryPassword, RecoveryPasswordSchema } from './features/auth/domain/recovery-password-code';
-import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { MiddlewareConsumer, Module, NestModule, RequestMethod } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import configuration, { ApiSettingsType, DbSettingsSettingsType, EnvironmentSettingsType } from './settings/configuration';
-import { CqrsModule } from '@nestjs/cqrs';
-
-import { Comments, CommentSchema } from './features/content/comments/domain/comments.entity';
-import { LoggerMiddlewar2, LoggerMiddleware } from './utilit/middlewares/logger.middleware';
-
-
-import { APP_GUARD } from '@nestjs/core';
-import { AuthModule } from './features/auth/auth.module';
-
-import { UserModule } from './features/user/user.module';
-import { ContentModule } from './features/content/content.moudle';
-import { UtilitModule } from './utilit/utitli.module';
-import { CoreModule } from './utilit/core.modu';
+import { MongooseModule } from '@nestjs/mongoose';
+import { ThrottlerModule } from '@nestjs/throttler';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { AuthModule } from './features/auth/auth.module';
+import { ContentModule } from './features/content/content.moudle';
 import { DeleteAllsController } from './features/testing-all-data/testing-all-data';
+import { UserModule } from './features/user/user.module';
+import configuration, { DbSettingsSettingsType, EnvironmentSettingsType, validate } from './settings/configuration';
+import { CoreModule } from './utilit/core.modu';
+import { LoggerMiddlewar2, LoggerMiddleware } from './utilit/middlewares/logger.middleware';
 
 
 @Module({
@@ -39,6 +24,7 @@ import { DeleteAllsController } from './features/testing-all-data/testing-all-da
       autoLoadEntities: false,
       synchronize: false,
     }),
+
     MongooseModule.forRootAsync({
       useFactory: async (configService: ConfigService) => {
         const environmentSettings = configService.get<EnvironmentSettingsType>('environmentSettings', {
@@ -64,9 +50,9 @@ import { DeleteAllsController } from './features/testing-all-data/testing-all-da
 
     ConfigModule.forRoot({
       isGlobal: true,
-      load: [configuration]
+      load: [configuration],
+      validate: validate,
     }),
-
     CoreModule,
 
     ThrottlerModule.forRoot([{
@@ -75,9 +61,10 @@ import { DeleteAllsController } from './features/testing-all-data/testing-all-da
     }]),
 
     AuthModule,
+
     UserModule,
+
     ContentModule,
-    UtilitModule
   ],
   // providers: [{
   //   provide: APP_GUARD,

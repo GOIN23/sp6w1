@@ -1,12 +1,7 @@
 
 import { Injectable } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
-import { User } from "../../user/domain/createdBy-user-Admin.entity"
-import { userDb } from '../../user/type/userType';
-import { RecoveryPassword } from '../domain/recovery-password-code';
-import { DeviceSesions } from '../domain/sesion-auth.entity';
 import { DataSource } from 'typeorm';
+import { DeviceSesions } from '../domain/sesion-auth.entity';
 
 
 @Injectable()
@@ -226,7 +221,12 @@ export class UsersAuthSqlRepository {
 
         const parametrs = [userId, deviceId]
 
-        await this.dataSource.query(queryuSesionTable, parametrs)
+        try {
+            await this.dataSource.query(queryuSesionTable, parametrs)
+
+        } catch (error) {
+            console.log(error)
+        }
 
     }
 

@@ -1,25 +1,88 @@
 import { Injectable } from "@nestjs/common";
 import { DataSource } from "typeorm";
 import { QueryPostsParamsDto } from "../models/input/query-posts.input";
-import { PostViewModelLiKeArrayDB } from "../type/typePosts";
+import { PostViewModelLiKeArray } from "../type/typePosts";
 
 @Injectable()
 export class PostsQuerySqlRepository {
     constructor(protected dataSource: DataSource) {
     }
 
-    public async getById(postId: string, userId?: string) {
+    async getById(postId: string, userId?: string) {
         const qureBlog = `
         SELECT *
-        FROM posts
+        FROM posts p
+        LEFT JOIN likes_info_posts ON p.post_id = post_fk_id
         WHERE post_id = $1
         `
         const parameter = [postId]
 
+        const qureCount = `
+        SELECT count(*) as count_dislike, (SELECT count(*) as count_like from likes_info_posts WHERE likes_info_posts.status = 'Like' AND post_fk_id = $1)
+        FROM likes_info_posts p
+        WHERE p.status = 'Dislike' AND p.post_fk_id = $1
+        `
+
+
+
 
 
         try {
+
             const post = await this.dataSource.query(qureBlog, parameter)
+            const countLike = await this.dataSource.query(qureCount, parameter)
+
+
+            console.log(post, countLike, "countLikecountLikecountLikecountLikecountLikecountLikecountLike")
+
+
+            let userStatus: any = []
+            if (userId) {
+                const userLike = `
+                SELECT *
+                FROM likes_info_posts
+                WHERE user_fk_id = $1 AND post_fk_id = $2
+                `
+                const parametrUserLike = [userId, postId]
+
+                userStatus = await this.dataSource.query(userLike, parametrUserLike)
+
+            }
+
+
+
+
+            const countLikeUserQuery = `
+            SELECT *
+            FROM likes_info_posts i
+            WHERE post_fk_id = $1 AND i.status = 'Like'
+            ORDER BY i.created_at_inf DESC -- Сортируем по дате, чтобы получить последние лайки
+            LIMIT 3; -- Ограничиваем количество последних лайков
+        `;
+            const parametrCountLikeUser = [postId]
+
+            const resultCountLikeUser = await this.dataSource.query(countLikeUserQuery, parametrCountLikeUser)
+
+
+
+            if (!resultCountLikeUser[0]) {
+
+                return {
+                    id: post[0].post_id.toString(),
+                    title: post[0].title,
+                    shortDescription: post[0].short_description,
+                    content: post[0].content,
+                    blogId: post[0].fk_blog.toString(),
+                    blogName: post[0].blog_name,
+                    createdAt: post[0].created_at,
+                    extendedLikesInfo: {
+                        likesCount: +countLike[0].count_like,
+                        dislikesCount: +countLike[0].count_dislike,
+                        myStatus: !userStatus[0] ? 'None' : userStatus[0].status,
+                        newestLikes: []
+                    }
+                }
+            }
 
             return {
                 id: post[0].post_id.toString(),
@@ -30,13 +93,19 @@ export class PostsQuerySqlRepository {
                 blogName: post[0].blog_name,
                 createdAt: post[0].created_at,
                 extendedLikesInfo: {
-                    likesCount: 0,
-                    dislikesCount: 0,
-                    myStatus: 'None',
-                    newestLikes: []
+                    likesCount: +countLike[0].count_like,
+                    dislikesCount: +countLike[0].count_dislike,
+                    myStatus: !userStatus[0] ? 'None' : userStatus[0].status,
+                    newestLikes: [...resultCountLikeUser.map(el => {
+                        return {
+                            addedAt: el.created_at_inf,
+                            userId: el.user_fk_id.toString(),
+                            login: el.user_login
+                        }
+                    })]
                 }
-
             }
+
 
         } catch (error) {
             console.log(error)
@@ -48,7 +117,6 @@ export class PostsQuerySqlRepository {
 
 
     async getPosts(query: QueryPostsParamsDto, userId?: string): Promise<any | { error: string }> {
-
         query.sortBy === "blogName" ? query.sortBy = "blog_name" : ''
         const sortBy = query.sortBy || 'created_at'; // по умолчанию сортировка по 'login'
 
@@ -69,23 +137,8 @@ export class PostsQuerySqlRepository {
         const items = await this.dataSource.query(queryuUserTable, parametr)
 
 
-        const userMapData: PostViewModelLiKeArrayDB[] = items.map((post: any) => {
-            return {
-                id: post.post_id.toString(),
-                title: post.title,
-                shortDescription: post.short_description,
-                content: post.content,
-                blogId: post.fk_blog.toString(),
-                blogName: post.blog_name,
-                createdAt: post.created_at,
-                extendedLikesInfo: {
-                    likesCount: 0,
-                    dislikesCount: 0,
-                    myStatus: 'None',
-                    newestLikes: []
-                }
-            };
-        });
+        const userMapData: any[] = await this.mapPosts(items, userId)
+
 
 
         const countQuery = `
@@ -115,121 +168,106 @@ export class PostsQuerySqlRepository {
     }
 
 
-    // public async mapPost(post: PostViewModelTdb, userId?: string): Promise<PostViewModelLiKeArray> {
+    async mapPosts(items: any, userId?: string): Promise<PostViewModelLiKeArray[]> {
+        const promises = items.map(async (post) => {
+            const qureCount = `
+        SELECT count(*) as count_dislike, (SELECT count(*) as count_like from likes_info_posts WHERE likes_info_posts.status = 'Like' AND post_fk_id = $1)
+        FROM likes_info_posts p
+        WHERE p.status = 'Dislike' AND p.post_fk_id = $1
+        `
+            const parameter = [post.post_id]
 
-
-    //     const dislikesCount = await this.likesPostModule.countDocuments({ postId: post._id, status: "Dislike" });
-    //     const likesCount = await this.likesPostModule.countDocuments({ postId: post._id, status: "Like" });
-    //     const userLikeStatus = await this.likesPostModule.findOne({ postId: post._id, userID: userId })
-
-    //     const newestLikes = await this.likesPostModule.find({ postId: post._id, status: "Like" }).lean()
-
-
-    //     let countingUserLikes: any
-    //     if (newestLikes.length === 1) {
-    //         countingUserLikes = [{ addedAt: newestLikes[newestLikes.length - 1].createdAt, userId: newestLikes[newestLikes.length - 1].userID, login: newestLikes[newestLikes.length - 1].login }]
-
-    //     } else if (newestLikes.length === 2) {
-    //         countingUserLikes = [{ addedAt: newestLikes[newestLikes.length - 1].createdAt, userId: newestLikes[newestLikes.length - 1].userID, login: newestLikes[newestLikes.length - 1].login }, { addedAt: newestLikes[newestLikes.length - 2].createdAt, userId: newestLikes[newestLikes.length - 2].userID, login: newestLikes[newestLikes.length - 2].login }]
-
-    //     } else if (newestLikes.length === 3) {
-    //         countingUserLikes = [{ addedAt: newestLikes[newestLikes.length - 1].createdAt, userId: newestLikes[newestLikes.length - 1].userID, login: newestLikes[newestLikes.length - 1].login }, { addedAt: newestLikes[newestLikes.length - 2].createdAt, userId: newestLikes[newestLikes.length - 2].userID, login: newestLikes[newestLikes.length - 2].login }, { addedAt: newestLikes[newestLikes.length - 3].createdAt, userId: newestLikes[newestLikes.length - 3].userID, login: newestLikes[newestLikes.length - 3].login }]
-
-    //     } else if (newestLikes.length > 3) {
-    //         countingUserLikes = [{ addedAt: newestLikes[newestLikes.length - 1].createdAt, userId: newestLikes[newestLikes.length - 1].userID, login: newestLikes[newestLikes.length - 1].login }, { addedAt: newestLikes[newestLikes.length - 2].createdAt, userId: newestLikes[newestLikes.length - 2].userID, login: newestLikes[newestLikes.length - 2].login }, { addedAt: newestLikes[newestLikes.length - 3].createdAt, userId: newestLikes[newestLikes.length - 3].userID, login: newestLikes[newestLikes.length - 3].login }]
-
-    //     } else if (newestLikes.length === 0) {
-    //         countingUserLikes = []
-    //     }
-
-    //     let resultStatus
-    //     if (!userLikeStatus) {
-    //         resultStatus = statusCommentLike.None
-    //     } else {
-    //         resultStatus = userLikeStatus!.status
-    //     }
+            const countLike = await this.dataSource.query(qureCount, parameter)
 
 
 
+            let userStatus: any[] = []
+            if (userId) {
+                const userLike = `
+                SELECT *
+                FROM likes_info_posts
+                WHERE user_fk_id = $1 AND post_fk_id = $2
+                `
+                const parametrUserLike = [userId, post.post_id]
 
-    //     return {
-    //         id: post._id,
-    //         title: post.title,
-    //         shortDescription: post.shortDescription,
-    //         content: post.content,
-    //         blogId: post.blogId,
-    //         blogName: post.blogName,
-    //         createdAt: post.createdAt,
-    //         extendedLikesInfo: {
-    //             likesCount: likesCount,
-    //             dislikesCount: dislikesCount,
-    //             myStatus: resultStatus,
-    //             newestLikes: countingUserLikes
-    //         }
+                const res = await this.dataSource.query(userLike, parametrUserLike)
+                userStatus.push(res[0])
+
+            }
 
 
-    //     };
-    // }
+            // const countLikeUser = `
+            // SELECT *
+            // FROM likes_info_posts i
+            // WHERE post_fk_id = $1 AND i.status = 'Like'
+            // `
+            // const parametrCountLikeUser = [post.post_id]
 
 
-    // public async mapPosts(items: PostViewModelTdb[], userId?: string): Promise<PostViewModelLiKeArray[]> {
-    //     const promises = items.map(async (post: PostViewModelTdb) => {
-    //         const dislikesCount = await this.likesPostModule.countDocuments({ postId: post._id, status: "Dislike" });
-    //         const likesCount = await this.likesPostModule.countDocuments({ postId: post._id, status: "Like" });
-    //         const userLikeStatus = await this.likesPostModule.findOne({ postId: post._id, userID: userId })
+            const countLikeUserQuery = `
+            SELECT *
+            FROM likes_info_posts i
+            WHERE post_fk_id = $1 AND i.status = 'Like'
+            ORDER BY i.created_at_inf DESC -- Сортируем по дате, чтобы получить последние лайки
+            LIMIT 3; -- Ограничиваем количество последних лайков
+        `;
+            const parametrCountLikeUser = [post.post_id]
 
-    //         const newestLikes = await this.likesPostModule.find({ postId: post._id, status: "Like" }).lean()
-
-
-    //         let countingUserLikes: any
-    //         if (newestLikes.length === 1) {
-    //             countingUserLikes = [{ addedAt: newestLikes[newestLikes.length - 1].createdAt, userId: newestLikes[newestLikes.length - 1].userID, login: newestLikes[newestLikes.length - 1].login }]
-
-    //         } else if (newestLikes.length === 2) {
-    //             countingUserLikes = [{ addedAt: newestLikes[newestLikes.length - 1].createdAt, userId: newestLikes[newestLikes.length - 1].userID, login: newestLikes[newestLikes.length - 1].login }, { addedAt: newestLikes[newestLikes.length - 2].createdAt, userId: newestLikes[newestLikes.length - 2].userID, login: newestLikes[newestLikes.length - 2].login }]
-
-    //         } else if (newestLikes.length === 3) {
-    //             countingUserLikes = [{ addedAt: newestLikes[newestLikes.length - 1].createdAt, userId: newestLikes[newestLikes.length - 1].userID, login: newestLikes[newestLikes.length - 1].login }, { addedAt: newestLikes[newestLikes.length - 2].createdAt, userId: newestLikes[newestLikes.length - 2].userID, login: newestLikes[newestLikes.length - 2].login }, { addedAt: newestLikes[newestLikes.length - 3].createdAt, userId: newestLikes[newestLikes.length - 3].userID, login: newestLikes[newestLikes.length - 3].login }]
-
-    //         } else if (newestLikes.length > 3) {
-    //             countingUserLikes = [{ addedAt: newestLikes[newestLikes.length - 1].createdAt, userId: newestLikes[newestLikes.length - 1].userID, login: newestLikes[newestLikes.length - 1].login }, { addedAt: newestLikes[newestLikes.length - 2].createdAt, userId: newestLikes[newestLikes.length - 2].userID, login: newestLikes[newestLikes.length - 2].login }, { addedAt: newestLikes[newestLikes.length - 3].createdAt, userId: newestLikes[newestLikes.length - 3].userID, login: newestLikes[newestLikes.length - 3].login }]
-
-    //         } else if (newestLikes.length === 0) {
-    //             countingUserLikes = []
-    //         }
-
-    //         let resultStatus
-    //         if (!userLikeStatus) {
-    //             resultStatus = statusCommentLike.None
-    //         } else {
-    //             resultStatus = userLikeStatus!.status
-    //         }
+            const resultCountLikeUser = await this.dataSource.query(countLikeUserQuery, parametrCountLikeUser)
 
 
-    //         return {
-    //             id: post._id,
-    //             title: post.title,
-    //             shortDescription: post.shortDescription,
-    //             content: post.content,
-    //             blogId: post.blogId,
-    //             blogName: post.blogName,
-    //             createdAt: post.createdAt,
-    //             extendedLikesInfo: {
-    //                 likesCount: likesCount,
-    //                 dislikesCount: dislikesCount,
-    //                 myStatus: resultStatus,
-    //                 newestLikes: countingUserLikes
-    //             }
+
+            if (!resultCountLikeUser[0]) {
+
+                return {
+                    id: post.post_id.toString(),
+                    title: post.title,
+                    shortDescription: post.short_description,
+                    content: post.content,
+                    blogId: post.fk_blog.toString(),
+                    blogName: post.blog_name,
+                    createdAt: post.created_at,
+                    extendedLikesInfo: {
+                        likesCount: +countLike[0].count_like,
+                        dislikesCount: +countLike[0].count_dislike,
+                        myStatus: !userStatus[0] ? 'None' : userStatus[0].status,
+                        newestLikes: []
+                    }
+                }
+            }
+
+            return {
+                id: post.post_id.toString(),
+                title: post.title,
+                shortDescription: post.short_description,
+                content: post.content,
+                blogId: post.fk_blog.toString(),
+                blogName: post.blog_name,
+                createdAt: post.created_at,
+                extendedLikesInfo: {
+                    likesCount: +countLike[0].count_like,
+                    dislikesCount: +countLike[0].count_dislike,
+                    myStatus: !userStatus[0] ? 'None' : userStatus[0].status,
+                    newestLikes: [...resultCountLikeUser.map(el => {
+                        return {
+                            addedAt: el.created_at_inf,
+                            userId: el.user_fk_id.toString(),
+                            login: el.user_login
+                        }
+                    })]
+                }
+            }
+
+        })
 
 
-    //         };
-    //     })
+
+        const userMapData = await Promise.all(promises)
+
+        return userMapData;
 
 
-    //     const userMapData = await Promise.all(promises)
-
-    //     return userMapData;
-    // }
+    }
 
 
 }
