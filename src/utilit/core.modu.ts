@@ -24,7 +24,7 @@ const pipe: Provider[] = [NumberPipe]
     imports: [
         JwtModule.register({
             secret: 'your_secret_key', // Замените на ваш секретный ключ
-            signOptions: { expiresIn: '6m' }, // Время жизни токена (например, 1 час)
+            signOptions: { expiresIn: '5m' }, // Время жизни токена (например, 1 час)
         }),
         CqrsModule,
     ],

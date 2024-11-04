@@ -1,7 +1,8 @@
-import { JwtService } from '@nestjs/jwt';
 import { Injectable } from "@nestjs/common";
-import { UsersCreatedRepository } from "../infrastructure/users.repository";
+import { JwtService } from '@nestjs/jwt';
+import { DeviceSesions } from "../domain/sesion-auth.entity";
 import { UsersAuthSqlRepository } from '../infrastructure/auth.sql.repository';
+import { UsersCreatedRepository } from "../infrastructure/users.repository";
 
 
 
@@ -9,8 +10,8 @@ import { UsersAuthSqlRepository } from '../infrastructure/auth.sql.repository';
 @Injectable()
 export class SesionsService {
     constructor(protected repositryAuth: UsersCreatedRepository, protected jwtService: JwtService, protected usersAuthSqlRepository: UsersAuthSqlRepository) { }
-    async creatSesion(userSession: any) {
-        await this.usersAuthSqlRepository.addSesionUser(userSession);
+    async creatSesion(userSession: DeviceSesions) {
+        return await this.usersAuthSqlRepository.addSesionUser(userSession);
     }
     async updateSesion(iat: string, userId: string, diveceId: string) {
         await this.usersAuthSqlRepository.updateSesionUser(iat, userId, diveceId);
@@ -36,7 +37,7 @@ export class SesionsService {
         }
     }
     async deleteSesions(payload: any,) {
-        await this.usersAuthSqlRepository.deleteSesions(payload.deviceId,payload.userId);
+        await this.usersAuthSqlRepository.deleteSesions(payload.deviceId, payload.userId);
 
 
     }

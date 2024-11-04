@@ -50,15 +50,13 @@ export class CommentsController {
     @UseGuards(JwtAuthGuard)
     @HttpCode(204)
     async updateComment(@Param("id") id: string, @Body() commetModel: CommentPosts, @Request() req,) {
-        debugger
 
 
 
         const res = await this.commentsQuerySqlRepository.complianceCheckUserComment(id, req.user.userId)
 
 
-        //@ts-ignore
-        if (res.error === 'Forbidden') {
+        if (res.errorMessage === 'Forbidden') {
             throw new ForbiddenException();
         }
 
@@ -82,13 +80,12 @@ export class CommentsController {
     @UseGuards(JwtAuthGuard)
     @HttpCode(204)
     async deleteCommentById(@Param("id") id: string, @Request() req) {
-        debugger
 
 
         const res = await this.commentsQuerySqlRepository.complianceCheckUserComment(id, req.user.userId)
 
 
-        if (res.error === 'Forbidden') {
+        if (res.errorMessage === 'Forbidden') {
             throw new ForbiddenException();
         }
 
@@ -116,7 +113,6 @@ export class CommentsController {
     @UseGuards(JwtAuthGuard)
     @HttpCode(204)
     async commentLikeStatus(@Param("id") id: string, @Body() likeCommentModel: PutLikeComment, @Request() req,) {
-
         const comment = await this.commentsQuerySqlRepository.findComment(id)
 
         if (!comment) {
@@ -126,8 +122,7 @@ export class CommentsController {
         }
 
 
-        //@ts-ignore
-        await this.commandBuse.execute(new UpdateLIkeDeslikeCommentCommand(likeCommentModel.likeStatus, id, req.user.userId, comment.user_login))
+        await this.commandBuse.execute(new UpdateLIkeDeslikeCommentCommand(likeCommentModel.likeStatus, id, req.user.userId, comment.comments.users.login))
 
 
     }

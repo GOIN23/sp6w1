@@ -11,11 +11,11 @@ import { UsersSqlRepository } from "../infrastructure/users.sql.repository";
 @ValidatorConstraint({ name: "EmailIsExist", async: true })
 @Injectable()
 export class EmailIsExistContsraint implements ValidatorConstraintInterface {
-    constructor(private readonly UsersRepository: UsersRepository, protected usersSqlRepository:UsersSqlRepository) { }
+    constructor(private readonly UsersRepository: UsersRepository, protected usersSqlRepository: UsersSqlRepository) { }
 
     async validate(value: any, validationArguments: ValidationArguments) {
         const loginIsExists = await this.usersSqlRepository.findIsEmail(value)
-        if (!loginIsExists) {
+        if (!loginIsExists.success) {
             return true
         } else {
             return false

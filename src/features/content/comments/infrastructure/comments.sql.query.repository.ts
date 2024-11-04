@@ -1,83 +1,85 @@
 import { Injectable } from "@nestjs/common";
-import { DataSource } from "typeorm";
-import { Paginator } from "../../../../utilit/TYPE/generalType";
+import { InjectRepository } from "@nestjs/typeorm";
+import { DataSource, Repository } from "typeorm";
+import { Paginator, ResultObject } from "../../../../utilit/TYPE/generalType";
+import { CommentsEntityT } from "../domain/comments.entityT";
+import { LikesInfoCommentsEntityT } from "../domain/likes.comments.entityT";
 import { CommentViewModel, CommentViewModelDb, statusCommentLike } from "../type/typeCommen";
 
 @Injectable()
 export class CommentsQuerySqlRepository {
-    constructor(protected dataSource: DataSource) {
+    constructor(protected dataSource: DataSource, @InjectRepository(CommentsEntityT)
+    protected comments: Repository<CommentsEntityT>, @InjectRepository(LikesInfoCommentsEntityT)
+        protected likesInfoComments: Repository<LikesInfoCommentsEntityT>
+    ) {
     }
 
-    async getCommentById(id: string, userId: string) {
-        debugger
-        const qureComment = `SELECT c.comments_id, 
-    c.content, 
-    c.created_at, 
-    c.post_id_fk, 
-    l.user_fk_id, 
-    l.user_login
-        FROM comments c
-        LEFT JOIN likes_info_comments l ON c.comments_id = l.comments_fk_id
-        WHERE c.comments_id = $1;
-        `
-        const parametrComment = [id]
+    async getCommentById(commentsId: string, userId: string) {
 
 
-        let result
-        try {
-            result = await this.dataSource.query(qureComment, parametrComment)
 
-            if (!result[0]) {
-                return null;
-            }
-        } catch (error) {
 
-            console.log(error)
+        const comments = await this.likesInfoComments
+            .createQueryBuilder('l')
+            .leftJoinAndSelect('l.comments', 'c')
+            .leftJoinAndSelect('l.users', 'u')
+            .where('c.commentsId = :commentsId', { commentsId, })
+            .getMany()
+
+
+        if (!comments[0]) {
+            return null;
         }
 
-        let status;
+
+
+        let status: statusCommentLike;
+
         if (userId === null) {
             status = statusCommentLike.None;
         } else {
-            const qureLikesInfoComments = `SELECT *
-                   FROM likes_info_comments
-                   WHERE comments_fk_id = $1 AND user_fk_id = $2
-               `
-            const parametr = [id, userId]
-            try {
-                const findUserStatusLike = await this.dataSource.query(qureLikesInfoComments, parametr)
+            const qureLikesInfoComments = await this.likesInfoComments
+                .createQueryBuilder('l')
+                .where('l.commentsId = :commentsId', { commentsId })
+                .andWhere('l.userFkId = :userId', { userId })
+                .getMany()
 
-                status = findUserStatusLike[0]?.status || statusCommentLike.None;
-
-
-            } catch (error) {
-                console.log(error)
-            }
+            status = (qureLikesInfoComments[0].status as statusCommentLike) || statusCommentLike.None
         }
 
-        const qureCountLikeDislike = `
-        SELECT count(*) as count_dislike, (SELECT count(*) as count_like from likes_info_comments WHERE likes_info_comments.status = 'Like' AND comments_fk_id = $1)
-        FROM likes_info_comments l
-        WHERE l.status = 'Dislike' AND l.comments_fk_id = $1
-        `
 
-        const paramtrCountLikeDislike = [id]
 
-        const resCountLikeDislike = await this.dataSource.query(qureCountLikeDislike, paramtrCountLikeDislike)
+        const qureCountLikeDislike = await this.likesInfoComments
+            .createQueryBuilder('l')
+            .select('COUNT(*)', 'countDislike')
+            .addSelect(
+                (subQuery) => {
+                    return subQuery.select("COUNT(*)")
+                        .from(LikesInfoCommentsEntityT, "likes")
+                        .where("likes.status = 'Like'")
+                        .andWhere("likes.commentsId = :commentsId", { commentsId })
+                },
+                'countLike'
+            )
+            .where("l.status = 'Dislike'")
+            .andWhere("l.commentsId = :commentsId", { commentsId })
+            .getRawOne();
+
+
 
 
         const mapData: CommentViewModel = {
-            id: result[0].comments_id.toString(),
+            id: comments[0].comments.commentsId.toString(),
             commentatorInfo: {
-                userId: result[0].user_fk_id.toString(),
-                userLogin: result[0].user_login
+                userId: comments[0].users.userId.toString(),
+                userLogin: comments[0].users.login
 
             },
-            content: result[0].content,
-            createdAt: result[0].created_at,
+            content: comments[0].comments.content,
+            createdAt: comments[0].comments.createdAt,
             likesInfo: {
-                dislikesCount: +resCountLikeDislike[0].count_dislike,
-                likesCount: +resCountLikeDislike[0].count_like,
+                dislikesCount: +qureCountLikeDislike.countDislike,
+                likesCount: +qureCountLikeDislike.countLike,
                 myStatus: status,
             },
         };
@@ -85,59 +87,49 @@ export class CommentsQuerySqlRepository {
         return mapData;
     }
 
-    async complianceCheckUserComment(commentId: string, userId: string) {
-        const qureComment = `SELECT *
-                        FROM comments
-                        WHERE comments_id = $1;
-        `
-        const parametrComment = [commentId]
-
+    async complianceCheckUserComment(commentId: string, userId: string): Promise<ResultObject> {
         try {
-            const result = await this.dataSource.query(qureComment, parametrComment)
+            const result = await this.comments.findOne({
+                where: { commentsId: +commentId },
+                relations: ['users']
+            })
 
-            if (result[0].user_fk_id !== userId) {
+
+            if (result.users.userId !== +userId) {
                 return {
-                    error: "Forbidden",
-                    status: 'null'
+                    success: false,
+                    errorMessage: "Forbidden",
+                    data: {}
                 }
             }
 
-            return result[0]
-        } catch (e) {
+
+
             return {
-                error: e,
-                status: 'null'
-
+                success: true,
+                errorMessage: "fulfilled",
+                data: result
             }
+
+        } catch (e) {
+
+            console.log(e)
         }
-
-
-
     }
     async findComment(commentId: string) {
-        const findComment = `
-        SELECT 
-    c.comments_id, 
-    c.content, 
-    c.created_at, 
-    c.post_id_fk, 
-    l.user_fk_id, 
-    l.user_login
-FROM 
-    comments c
-LEFT JOIN 
-    likes_info_comments l 
-    ON c.comments_id = l.comments_fk_id
-WHERE 
-    c.comments_id = $1;
-        `
+        try {
+            const result = await this.likesInfoComments
+                .createQueryBuilder('l')
+                .leftJoinAndSelect('l.comments', 'c')
+                .leftJoinAndSelect('c.users', 'u')
+                .where('c.commentsId = :commentId', { commentId })
+                .getOne()
 
-        const parametr = [commentId]
+            return result
+        } catch (error) {
+            console.log(error)
 
-        const result = await this.dataSource.query(findComment, parametr)
-
-
-        return result[0]
+        }
 
 
     }

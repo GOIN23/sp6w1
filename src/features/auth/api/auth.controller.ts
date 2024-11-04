@@ -44,7 +44,6 @@ export class AuthController {
     @HttpCode(204)
     async logout(@Request() req) {
 
-        console.log("aliiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii")
         const result = await this.authService.checkRefreshToken(req.cookies.refreshToken)
 
 
@@ -108,27 +107,7 @@ export class AuthController {
     @HttpCode(204)
     async registrationEmailResending(@Body("email") email: string, @Request() req) {
 
-        // const metaData: any = {
-        //     IP: req.ip,
-        //     URL: req.originalUrl,
-        //     date: new Date(),
-        // };
 
-
-        // const countreQurey = await this.authService.checkingNumberRequests(metaData);
-
-
-
-
-
-
-        // if (countreQurey >= 5) {
-        //     throw new HttpException("Dsds", HttpStatus.TOO_MANY_REQUESTS)
-        // }
-
-        // console.log(countreQurey,"countreQureycountreQureycountreQureycountreQurey")
-
-        // await this.authService.addRateLlimit(metaData);
 
 
         const res = await this.authService.resendingCode(email)
@@ -164,7 +143,7 @@ export class AuthController {
 
         }
     }
-
+    @SkipThrottle({ default: false })
     @Get("me")
     @UseGuards(AuthGuard('jwt'))
     @HttpCode(200)

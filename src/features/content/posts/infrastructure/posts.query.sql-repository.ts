@@ -1,115 +1,118 @@
 import { Injectable } from "@nestjs/common";
-import { DataSource } from "typeorm";
+import { InjectRepository } from "@nestjs/typeorm";
+import { DataSource, Repository } from "typeorm";
+import { LikesInfoPostsEntityT } from "../domain/likes.posts.entityT";
+import { PostsEntityT } from "../domain/posts.entityT";
 import { QueryPostsParamsDto } from "../models/input/query-posts.input";
-import { PostViewModelLiKeArray } from "../type/typePosts";
+import { PostViewModelLiKeArray, statusCommentLike } from "../type/typePosts";
 
 @Injectable()
 export class PostsQuerySqlRepository {
-    constructor(protected dataSource: DataSource) {
+    constructor(protected dataSource: DataSource,
+        @InjectRepository(PostsEntityT) protected posts: Repository<PostsEntityT>,
+        @InjectRepository(LikesInfoPostsEntityT) protected likesInfoPosts: Repository<LikesInfoPostsEntityT>
+
+    ) {
     }
 
     async getById(postId: string, userId?: string) {
-        const qureBlog = `
-        SELECT *
-        FROM posts p
-        LEFT JOIN likes_info_posts ON p.post_id = post_fk_id
-        WHERE post_id = $1
-        `
-        const parameter = [postId]
-
-        const qureCount = `
-        SELECT count(*) as count_dislike, (SELECT count(*) as count_like from likes_info_posts WHERE likes_info_posts.status = 'Like' AND post_fk_id = $1)
-        FROM likes_info_posts p
-        WHERE p.status = 'Dislike' AND p.post_fk_id = $1
-        `
-
-
-
-
-
+        debugger
         try {
-
-            const post = await this.dataSource.query(qureBlog, parameter)
-            const countLike = await this.dataSource.query(qureCount, parameter)
-
-
-            console.log(post, countLike, "countLikecountLikecountLikecountLikecountLikecountLikecountLike")
+            const post = await this.posts.findOne({
+                where: { postId: +postId },
+                relations: ['blogs']
+            })
 
 
-            let userStatus: any = []
-            if (userId) {
-                const userLike = `
-                SELECT *
-                FROM likes_info_posts
-                WHERE user_fk_id = $1 AND post_fk_id = $2
-                `
-                const parametrUserLike = [userId, postId]
 
-                userStatus = await this.dataSource.query(userLike, parametrUserLike)
 
+
+
+            let status: statusCommentLike;
+
+            if (userId === null) {
+                status = statusCommentLike.None;
+            } else {
+                const qureLikesInfoComments = await this.likesInfoPosts
+                    .createQueryBuilder('l')
+                    .where('l.postsId = :postId', { postId })
+                    .andWhere('l.userFkId = :userId', { userId })
+                    .getMany()
+
+                status = (qureLikesInfoComments[0].status as statusCommentLike) || statusCommentLike.None
             }
 
 
 
 
-            const countLikeUserQuery = `
-            SELECT *
-            FROM likes_info_posts i
-            WHERE post_fk_id = $1 AND i.status = 'Like'
-            ORDER BY i.created_at_inf DESC -- Сортируем по дате, чтобы получить последние лайки
-            LIMIT 3; -- Ограничиваем количество последних лайков
-        `;
-            const parametrCountLikeUser = [postId]
+            // const qureCountLikeDislike = await this.likesInfoPosts
+            //     .createQueryBuilder('l')
+            //     .select('COUNT(*)', 'countDislike')
+            //     .addSelect(
+            //         (subQuery) => {
+            //             return subQuery.select("COUNT(*)")
+            //                 .from(LikesInfoPostsEntityT, "likes")
+            //                 .where("likes.status = 'Like'")
+            //                 .andWhere("likes.postsId = :postId", { postId })
+            //         },
+            //         'countLike'
+            //     )
+            //     .where("l.status = 'Dislike'")
+            //     .andWhere("l.postsId = :postId", { postId })
+            //     .getRawOne();
 
-            const resultCountLikeUser = await this.dataSource.query(countLikeUserQuery, parametrCountLikeUser)
+            const qureCountLikeDislike = await this.likesInfoPosts
+                .createQueryBuilder('l')
+                .select('COUNT(*)', 'countDislike')
+                .addSelect(
+                    (subQuery) => {
+                        return subQuery.select("COUNT(*)")
+                            .from(LikesInfoPostsEntityT, "likes")
+                            .where("likes.status = 'Like'")
+                            .andWhere("likes.postsId = :postId", { postId });
+                    },
+                    'countLike'
+                )
+                .addSelect(
+                    (subQuery) => {
+                        return subQuery
+                            .select("array_agg(likes.userFkId) AS lastThreeLikes")
+                            .from(LikesInfoPostsEntityT, "likes")
+                            .where("likes.status = 'Like'")
+                            .andWhere("likes.postsId = :postId", { postId })
+                            .orderBy("likes.createdAt", "DESC") // сортировка по убыванию даты
+                            .limit(3); // лимитируем до трех последних лайков
+                    },
+                    'lastThreeLikes'
+                )
+                .where("l.status = 'Dislike'")
+                .andWhere("l.postsId = :postId", { postId })
+                .getRawOne();
 
 
 
-            if (!resultCountLikeUser[0]) {
 
-                return {
-                    id: post[0].post_id.toString(),
-                    title: post[0].title,
-                    shortDescription: post[0].short_description,
-                    content: post[0].content,
-                    blogId: post[0].fk_blog.toString(),
-                    blogName: post[0].blog_name,
-                    createdAt: post[0].created_at,
-                    extendedLikesInfo: {
-                        likesCount: +countLike[0].count_like,
-                        dislikesCount: +countLike[0].count_dislike,
-                        myStatus: !userStatus[0] ? 'None' : userStatus[0].status,
-                        newestLikes: []
-                    }
-                }
-            }
 
             return {
-                id: post[0].post_id.toString(),
-                title: post[0].title,
-                shortDescription: post[0].short_description,
-                content: post[0].content,
-                blogId: post[0].fk_blog.toString(),
-                blogName: post[0].blog_name,
-                createdAt: post[0].created_at,
+                id: post.postId.toString(),
+                title: post.title,
+                shortDescription: post.shortDescription,
+                content: post.content,
+                blogId: post.blogs.blogId.toString(),
+                blogName: post.blogName,
+                createdAt: post.createdAt,
                 extendedLikesInfo: {
-                    likesCount: +countLike[0].count_like,
-                    dislikesCount: +countLike[0].count_dislike,
-                    myStatus: !userStatus[0] ? 'None' : userStatus[0].status,
-                    newestLikes: [...resultCountLikeUser.map(el => {
-                        return {
-                            addedAt: el.created_at_inf,
-                            userId: el.user_fk_id.toString(),
-                            login: el.user_login
-                        }
-                    })]
+                    dislikesCount: +qureCountLikeDislike.countDislike,
+                    likesCount: +qureCountLikeDislike.countLike,
+                    myStatus: status,
+                    newestLikes: [...qureCountLikeDislike]
                 }
+
             }
 
+        } catch (e) {
 
-        } catch (error) {
-            console.log(error)
-
+            console.log(e)
         }
 
 
@@ -117,47 +120,76 @@ export class PostsQuerySqlRepository {
 
 
     async getPosts(query: QueryPostsParamsDto, userId?: string): Promise<any | { error: string }> {
-        query.sortBy === "blogName" ? query.sortBy = "blog_name" : ''
-        const sortBy = query.sortBy || 'created_at'; // по умолчанию сортировка по 'login'
+        const sortBy = query.sortBy || 'createdAt'; // Сортировка по умолчанию — по createdAt
+        const sortDirection: "ASC" | "DESC" = query.sortDirection === 'desc' ? 'DESC' : 'ASC';
+        const searchTitleTerm = query.searchNameTerm ? `%${query.searchNameTerm.toLowerCase()}%` : null;
+        const pageNumber = query.pageNumber || 1;
+        const pageSize = query.pageSize || 10;
+
+        // Получаем репозиторий для работы с таблицей posts
+
+        try {
+            debugger
+            const [result, totalCount] = await this.posts
+                .createQueryBuilder('p')
+                .select('p.postId') // Берем только ID основной сущности
+                .where(searchTitleTerm ? 'LOWER(p.title) LIKE :searchTitleTerm' : '1=1', {
+                    searchTitleTerm
+                })
+                .orderBy(`p.${query.sortBy} COLLATE "C"`, sortDirection)
+                .skip((query.pageNumber - 1) * query.pageSize)
+                .take(query.pageSize)
+                .getManyAndCount();
+
+            const postIds = result.map(post => post.postId);
+
+            // Второй запрос: подгружаем данные и связанные сущности
+            const [items, s] = await this.posts
+                .createQueryBuilder('p')
+                .leftJoinAndSelect('p.blogs', 'b')
+                .where('p.postId IN (:...postIds)', { postIds })
+                .andWhere(searchTitleTerm ? 'LOWER(p.title) LIKE :searchTitleTerm' : '1=1', {
+                    searchTitleTerm
+                })
+                .orderBy(`p.${query.sortBy} COLLATE "C"`, sortDirection)
+                .getManyAndCount();
 
 
 
-        const sortDirection = query.sortDirection === 'desc' ? 'DESC' : 'ASC';
-
-        const queryuUserTable = `
-        SELECT *
-        FROM posts
-        WHERE (LOWER(title) LIKE LOWER(CONCAT('%', $1::TEXT, '%')) OR $1 IS NULL)
-        ORDER BY ${sortBy} COLLATE "C" ${sortDirection} 
-        LIMIT $2 OFFSET $3;
-    `;
-
-        const parametr = [query.searchNameTerm || '', query.pageSize, (query.pageNumber - 1) * query.pageSize];
-
-        const items = await this.dataSource.query(queryuUserTable, parametr)
-
-
-        const userMapData: any[] = await this.mapPosts(items, userId)
 
 
 
-        const countQuery = `
-        SELECT COUNT(*)
-        FROM posts
-        WHERE (LOWER(title) LIKE LOWER(CONCAT('%', $1::TEXT, '%')) OR $1 IS NULL)
-    `;
-        const countParams = [query.searchNameTerm || ''];
-        const totalItemsResult = await this.dataSource.query(countQuery, countParams);
-        const totalCount = parseInt(totalItemsResult[0].count, 10); // Общее 
 
 
-        return {
-            pagesCount: Math.ceil(totalCount / query.pageSize),
-            page: +query.pageNumber,
-            pageSize: +query.pageSize,
-            totalCount: totalCount,
-            items: userMapData,
-        };
+            // Форматируем данные под ожидаемую структуру
+            const mapPosts: any[] = items.map((post) => ({
+                id: post.postId.toString(),
+                blogId: post.blogs.blogId.toString(),
+                blogName: post.blogName, // Предполагаем, что blogName приходит из связи с таблицей blog
+                content: post.content,
+                createdAt: post.createdAt,
+                shortDescription: post.shortDescription,
+                title: post.title,
+                extendedLikesInfo: {
+                    dislikesCount: 0,
+                    likesCount: 0,
+                    myStatus: 'None',
+                    newestLikes: []
+                }
+            }));
+
+            // Возвращаем данные в формате с метаинформацией
+            return {
+                pagesCount: Math.ceil(totalCount / pageSize),
+                page: +pageNumber,
+                pageSize: +pageSize,
+                totalCount: +totalCount,
+                items: mapPosts,
+            };
+        } catch (error) {
+            console.error('Error fetching posts:', error);
+            throw new Error('Failed to fetch posts');
+        }
 
 
 
@@ -169,6 +201,10 @@ export class PostsQuerySqlRepository {
 
 
     async mapPosts(items: any, userId?: string): Promise<PostViewModelLiKeArray[]> {
+
+
+
+
         const promises = items.map(async (post) => {
             const qureCount = `
         SELECT count(*) as count_dislike, (SELECT count(*) as count_like from likes_info_posts WHERE likes_info_posts.status = 'Like' AND post_fk_id = $1)

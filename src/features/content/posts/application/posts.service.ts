@@ -14,7 +14,6 @@ export class PostsService {
     constructor(private postRepository: PostRepository, protected postSqlRepository: PostSqlRepository, protected usersSqlRepository: UsersSqlRepository) { }
 
     async creatPosts(postsModel: PostsCreateModel, blog: BlogOutputModel) {
-
         const newUser: any = {
             blogId: postsModel.blogId,
             blogName: blog.name,
@@ -35,19 +34,6 @@ export class PostsService {
 
 
 
-        // const likeInfoMetaData: any = {
-        //     //@ts-ignore
-        //     postId: postId,
-        //     createdAt: new Date().toISOString(),
-        //     status: statusCommentLike.None,
-        //     userID: user.userId,
-        //     userLogin: user.login
-        // };
-
-
-        // await this.postSqlRepository.createLikeInfoMetaDataComment(likeInfoMetaData);
-
-
     }
 
     async updatePost(id: string, postsModel: PostsCreateModel) {
@@ -59,8 +45,6 @@ export class PostsService {
     }
 
     async createCommentPost(content: string, user: any, IdPost: string) {
-
-
         const newCommentPosts: CommentViewModelDb = {
             content: content,
             commentatorInfo: {
@@ -76,13 +60,9 @@ export class PostsService {
             IdPost,
         };
 
-
-
-
         const commentsId = await this.postSqlRepository.createCommentPost(newCommentPosts);
 
         const likeInfoMetaData: any = {
-            //@ts-ignore
             commentId: commentsId,
             createdAt: new Date().toISOString(),
             status: statusCommentLike.None,
@@ -106,7 +86,7 @@ export class PostsService {
     async updatePostsLikeDeslike(likeStatus: statusCommentLike, postId: string, userId: string, userLogin: string) {
         const fintLikeDislake = await this.postSqlRepository.findLikeDislakePost(userId, postId);
         if (!fintLikeDislake) {
-            const likeInfoMetaData: any = {
+            const likeInfoMetaData = {
                 postId: postId,
                 createdAt: new Date().toISOString(),
                 status: likeStatus,

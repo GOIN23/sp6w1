@@ -39,17 +39,6 @@ export class UsersController {
     }
 
 
-    @Get("/:id")
-    @HttpCode(200)
-    async geteUser(@Param("id") id: string) {
-        const users = await this.usersSqlQueryRepository.getById(id)
-
-        return users
-
-    }
-
-
-
     @Delete("/:id")
     @HttpCode(204)
     async deleteUser(@Param("id") id: string) {

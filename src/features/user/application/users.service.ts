@@ -1,13 +1,12 @@
 
 
 import { Injectable } from "@nestjs/common";
-import { UsersRepository } from "../infrastructure/users.repository";
-import { Types } from "mongoose";
-import { User } from "../domain/createdBy-user-Admin.entity";
-import { add } from "date-fns";
 import * as bcrypt from 'bcrypt';
 import { randomUUID } from "crypto";
+import { add } from "date-fns";
 import { EmailAdapter } from "../../auth/application/emai-Adapter";
+import { User } from "../domain/createdBy-user-Admin.entity";
+import { UsersRepository } from "../infrastructure/users.repository";
 import { UsersSqlRepository } from "../infrastructure/users.sql.repository";
 
 
@@ -16,7 +15,7 @@ import { UsersSqlRepository } from "../infrastructure/users.sql.repository";
 // Для провайдера всегда необходимо применять декоратор @Injectable() и регистрировать в модуле
 @Injectable()
 export class UsersService {
-    constructor(private usersRepository: UsersRepository, protected emailAdapter: EmailAdapter, protected usersSqlRepository:UsersSqlRepository) { }
+    constructor(private usersRepository: UsersRepository, protected emailAdapter: EmailAdapter, protected usersSqlRepository: UsersSqlRepository) { }
 
     async creatUser(email: string, login: string, password: string): Promise<string> {
 

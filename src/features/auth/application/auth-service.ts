@@ -3,7 +3,7 @@ import { JwtService } from "@nestjs/jwt";
 import * as bcrypt from 'bcrypt';
 import { randomUUID } from "crypto";
 import { add } from "date-fns";
-import { ObjectId } from "mongodb";
+import { v4 as uuidv4 } from 'uuid';
 import { User } from "../../user/domain/createdBy-user-Admin.entity";
 import { UsersSqlRepository } from "../../user/infrastructure/users.sql.repository";
 import { UserCreateModel } from "../../user/models/input/create-user.input.model";
@@ -12,6 +12,7 @@ import { UsersAuthSqlRepository } from "../infrastructure/auth.sql.repository";
 import { UsersCreatedRepository } from "../infrastructure/users.repository";
 import { EmailAdapter } from "./emai-Adapter";
 import { SesionsService } from "./sesions-service";
+
 
 
 
@@ -51,9 +52,11 @@ export class UsersAuthService {
 
     }
     async login(user: any) {
-        const deviceId: string = new ObjectId().toString()
+        const deviceId = uuidv4();
+
         const payload = { userLogin: user.login, userId: user.userId, deviceId: deviceId };
-        const tokens = { accessToken: this.jwtService.sign(payload), refreshToken: this.jwtService.sign(payload, { expiresIn: "6m" }) }
+        const tokens = { accessToken: this.jwtService.sign(payload), refreshToken: this.jwtService.sign(payload, { expiresIn: "20s" }) }
+
 
         const userSession: DeviceSesions = {
             userId: user.userId,
@@ -64,6 +67,8 @@ export class UsersAuthService {
         };
 
         await this.sesionsService.creatSesion(userSession)
+
+
 
 
         return tokens
@@ -88,20 +93,21 @@ export class UsersAuthService {
     }
     async confirmEmail(code: string) {
 
-        const user: any = await this.usersAuthSqlRepository.findUserByConfirEmail(code);
+        const user: any = await this.usersSqlRepository.findUserByConfirEmail(code)
+
 
 
         if (!user) {
             return null;
         }
 
-        if (user.is_confirmed) {
+        if (user.isConfirmed) {
             return null
         }
-        const expirationDate = new Date(user.expiration_date);
+        const expirationDate = new Date(user.expirationDate);
 
-        if (user.confirmation_code === code && expirationDate > new Date()) {
-            const result = await this.usersAuthSqlRepository.updateConfirmation(user.user_id);
+        if (user.confirmationCode === code && expirationDate > new Date()) {
+            const result = await this.usersSqlRepository.updateConfirmation(user.user.userId);
 
             return result;
         }
@@ -109,7 +115,7 @@ export class UsersAuthService {
         return null;
     }
     async resendingCode(email: string) {
-        const user = await this.usersAuthSqlRepository.findBlogOrEmail(email);
+        const user = await this.usersSqlRepository.findBlogOrEmail(email);
 
         if (!user) {
             return false
@@ -121,7 +127,7 @@ export class UsersAuthService {
         }
 
         const newCode = randomUUID();
-        await this.usersAuthSqlRepository.updateCodeUserByConfirEmail(user._id, newCode);
+        await this.usersSqlRepository.updateCodeUserByConfirEmail(user._id, newCode);
 
 
         this.emailAdapter.sendEmail(newCode, email);
@@ -149,7 +155,7 @@ export class UsersAuthService {
         const passwordSalt = await bcrypt.genSalt(10);
         const passwordHash = await this._generatHash(newPassword, passwordSalt);
 
-        await this.usersAuthSqlRepository.updatePassword(result.email, passwordHash, passwordSalt);
+        await this.usersSqlRepository.updatePassword(result.email, passwordHash, passwordSalt);
 
         return true;
     }
@@ -159,17 +165,17 @@ export class UsersAuthService {
         return res;
     }
     async checkRefreshToken(refreshToken: string) {
-        console.log(refreshToken, "aliiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii")
+        debugger
 
         try {
             const result: any = await this.jwtService.verify(refreshToken);
-            const checkSesionshToken = await this.usersAuthSqlRepository.findRottenSessions(result.userId, result.deviceId);
+            const checkSesionshToken = await this.usersAuthSqlRepository.findRottenSessions(+result.userId, result.deviceId);
 
 
             if (!checkSesionshToken) {
                 return null;
             }
-            if (result.iat < checkSesionshToken!.last_active_date) {
+            if (result.iat < checkSesionshToken.lastActiveDate) {
                 return null;
             }
 

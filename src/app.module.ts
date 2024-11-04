@@ -20,9 +20,10 @@ import { LoggerMiddlewar2, LoggerMiddleware } from './utilit/middlewares/logger.
       port: 5432,
       username: 'postgres',
       password: '1234',
-      database: 'NestPage',
-      autoLoadEntities: false,
-      synchronize: false,
+      database: 'typeORMtestNest',
+      autoLoadEntities: true,
+      synchronize: true,
+      logging: true
     }),
 
     MongooseModule.forRootAsync({

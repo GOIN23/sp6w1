@@ -3,14 +3,14 @@ import { IsInt, IsOptional, IsString } from "class-validator";
 
 
 
-import { PipeTransform, Injectable, ArgumentMetadata } from '@nestjs/common';
+import { ArgumentMetadata, Injectable, PipeTransform } from '@nestjs/common';
 import { Type } from "class-transformer";
 
 @Injectable()
 export class DefaultValuesPipeUser implements PipeTransform {
     transform(value: any, metadata: ArgumentMetadata) {
         return {
-            sortBy: value.sortBy || 'created_at',
+            sortBy: value.sortBy || 'createdAt',
             sortDirection: value.sortDirection || 'desc',
             pageNumber: value.pageNumber || 1,
             pageSize: value.pageSize || 10,
@@ -26,7 +26,7 @@ export class DefaultValuesPipeUser implements PipeTransform {
 export class QueryParamsDto {
     @IsOptional()
     @IsString()
-    sortBy: string = 'created_at'; // значение по умолчанию
+    sortBy: string // значение по умолчанию
 
     @IsOptional()
     @IsString()

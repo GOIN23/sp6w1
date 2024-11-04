@@ -11,12 +11,12 @@ import { UsersSqlRepository } from "../infrastructure/users.sql.repository";
 @ValidatorConstraint({ name: "LoginIsExist", async: true })
 @Injectable()
 export class LoginIsExistContsraint implements ValidatorConstraintInterface {
-    constructor(private readonly UsersRepository: UsersRepository, protected usersSqlRepository:UsersSqlRepository) { }
+    constructor(private readonly UsersRepository: UsersRepository, protected usersSqlRepository: UsersSqlRepository) { }
 
     async validate(value: any, validationArguments: ValidationArguments) {
         const loginIsExists = await this.usersSqlRepository.findIsLogin(value)
 
-        if (!loginIsExists) {
+        if (!loginIsExists.success) {
             return true
         } else {
             return false

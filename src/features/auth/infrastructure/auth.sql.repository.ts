@@ -1,12 +1,17 @@
 
 import { Injectable } from '@nestjs/common';
-import { DataSource } from 'typeorm';
-import { DeviceSesions } from '../domain/sesion-auth.entity';
+import { InjectRepository } from '@nestjs/typeorm';
+import { DataSource, Repository } from 'typeorm';
+import { UsersSqlRepository } from '../../user/infrastructure/users.sql.repository';
+import { RecoveryPassword } from '../domain/recovery.password.code.entity';
+import { SesionEntity } from '../domain/sesion.auth.entity';
 
 
 @Injectable()
 export class UsersAuthSqlRepository {
-    constructor(protected dataSource: DataSource) { }
+    constructor(protected dataSource: DataSource, @InjectRepository(SesionEntity)
+    protected sesions: Repository<SesionEntity>, protected usersSqlRepository: UsersSqlRepository, @InjectRepository(RecoveryPassword)
+        protected recoveryPassword: Repository<RecoveryPassword>) { }
 
 
     // async findUsers(id: string | undefined) {
@@ -19,136 +24,43 @@ export class UsersAuthSqlRepository {
 
     async findBlogOrEmail(loginOrEmail: string): Promise<any | null> {
 
-        const queryuUserTable = `
-          SELECT *
-          FROM users
-          LEFT JOIN email_confirmation ON fk_users_id = user_id
-          WHERE login = $1 OR email = $1
-    `
-
-        try {
-            const user = await this.dataSource.query(queryuUserTable, [loginOrEmail])
 
 
-            if (!user) {
-                return null
-            }
 
-            return {
-                _id: user[0].user_id,
-                createdAt: user[0].created_at,
-                email: user[0].email,
-                login: user[0].login,
-                passwordHash: user[0].password_hash,
-                passwordSalt: user[0].password_salt,
-                isConfirmed: user[0].is_confirmed
-            };
-        } catch (error) {
-            return false
-
+        const result = await this.usersSqlRepository.findBlogOrEmail(loginOrEmail)
+        if (!result) {
+            return null
         }
 
-    }
-
-    async findUserByConfirEmail(code: string) {
-
-        const queryuUserTable = `
-        SELECT user_id, confirmation_code, is_confirmed, expiration_date
-        FROM email_confirmation
-        LEFT JOIN users
-        ON fk_users_id = user_id
-        WHERE confirmation_code = $1
-    `
-
-        const parameter = [code]
-        try {
-            const user = await this.dataSource.query(queryuUserTable, parameter)
-
-
-            return user[0]
-
-        } catch (error) {
-            console.log(error)
-
-        }
+        return result
 
 
 
     }
 
-    async updateConfirmation(user_id: string) {
-
-        const queryuUserTable = `
-        UPDATE email_confirmation
-        SET is_confirmed = $1
-        WHERE fk_users_id = $2;
-    `;
-
-
-        const parameters = [true, user_id];
-        try {
-            await this.dataSource.query(queryuUserTable, parameters)
-            console.log('Executing query with parameters:', parameters);
-
-
-            return true
-        } catch (error) {
-            console.log(error)
-            return false
-
-        }
-
-
-    }
-
-    async updateCodeUserByConfirEmail(userID: string, code: string) {
-
-        const queryuUserTable = `
-        UPDATE email_confirmation
-        SET confirmation_code = $1
-        WHERE fk_users_id = $2;
-    `;
-        const parameter = [code, userID]
-
-        try {
-            await this.dataSource.query(queryuUserTable, parameter)
-
-        } catch (error) {
-            console.log(error)
-
-        }
-
-    }
 
     async postPasswordRecoveryCode(code: string, email: string) {
-        const queryuRecoveryPasswordTable = `
-        INSERT INTO recovery_password (code, email)
-        VALUES($1,$2)
-        `;
-
-
-        const parameter = [code, email]
-
         try {
-            const sesion = await this.dataSource.query(queryuRecoveryPasswordTable, parameter)
-            return sesion[0]
+            await this.recoveryPassword.insert({
+                code: code,
+                email: email
+            })
 
         } catch (error) {
-            console.log(error)
+            console.error('Error updating session:', error);
         }
+
     }
 
     async checkPasswordRecoveryCode(code: string) {
-        const queryuRecoveryPasswordTable = `
-        SELECT *
-        FROM recovery_password
-        WHERE code = $1
-        `;
-        const parameter = [code]
+
 
         try {
-            const recoveryPassword = await this.dataSource.query(queryuRecoveryPasswordTable, parameter)
-            return recoveryPassword[0]
+            const res = await this.recoveryPassword.findOne({
+                where: { code: code }
+            })
+
+            return res
 
         } catch (error) {
             console.log(error)
@@ -172,124 +84,100 @@ export class UsersAuthSqlRepository {
             console.log(error)
         }
 
-    }
-
-    async addSesionUser(userSession: DeviceSesions) {
-        const queryuSesionTable = `
-        INSERT INTO device_sesions (device_id, ip, last_active_date, title, user_id)
-        VALUES ($1, $2, $3, $4, $5)
-        RETURNING user_id;
-        `;
-        const parametersUserTable = [userSession.deviceId, userSession.ip, userSession.lastActiveDate, userSession.title, userSession.userId]
-
-        try {
-            await this.dataSource.query(queryuSesionTable, parametersUserTable)
-
-        } catch (error) {
-            console.log(error)
-        }
 
     }
 
-    async findRottenSessions(userId: string, deviceId: string) {
+    async addSesionUser(userSession: any) {
+        debugger
 
-        const queryuSesionTable = `
-        SELECT *
-        FROM device_sesions
-        WHERE device_id = $1 AND user_id = $2
-        `;
+        const result = await this.sesions.insert({
+            deviceId: userSession.deviceId,
+            ip: userSession.ip,
+            lastActiveDate: userSession.lastActiveDate,
+            title: userSession.title,
+            user: userSession.userId
+        })
+        return result.identifiers[0].deviceId
+    }
 
 
-        const parametr = [deviceId, userId]
+    async findRottenSessions(userId: number, deviceId: string) {
+
 
         try {
-            const sesion = await this.dataSource.query(queryuSesionTable, parametr)
-            return sesion[0]
+            const session = await this.sesions.createQueryBuilder('s') // Создаем QueryBuilder для SessionEntity
+                .where('s.deviceId = :deviceId', { deviceId }) // Условия для фильтрации по deviceId
+                .andWhere('s.userIdFk = :userId', { userId }) // Условия для фильтрации по userId
+                .getOne(); // Получаем одну запись или null
 
+            return session; // Вернуть найденную сессию или null
         } catch (error) {
-            console.log(error)
+            console.log(error); // Логируем ошибку
+            return null; // Возвращаем null в случае ошибки
         }
+
 
     }
 
     async completelyRemoveSesion(deviceId: string, userId: string) {
 
-        const queryuSesionTable = `
-        DELETE FROM device_sesions
-        WHERE user_id = $1 AND device_id = $2
-        `;
-
-        const parametrs = [userId, deviceId]
-
-        try {
-            await this.dataSource.query(queryuSesionTable, parametrs)
-
-        } catch (error) {
-            console.log(error)
-        }
-
+        await this.sesions.delete({ deviceId: deviceId, user: { userId: +userId } })
     }
 
-    async updateSesionUser(iat: string, userId: string, diveceId: string) {
-        const queryuSesionTable = `
-        UPDATE device_sesions
-        SET last_active_date = $1
-        WHERE user_id = $2 AND device_id = $3;
-    `;
+    async updateSesionUser(iat: string, userId: string, diveceid: string) {
 
-        const parameter = [iat, userId, diveceId]
 
         try {
-            await this.dataSource.query(queryuSesionTable, parameter)
-
+            await this.sesions
+                .createQueryBuilder()
+                .update(SesionEntity)
+                .set({ lastActiveDate: iat }) // Устанавливаем новое значение для lastActiveDate
+                .where('"userIdFk" = :userId', { userId })
+                .andWhere('"deviceId" = :diveceid', { diveceid })
+                .execute();
         } catch (error) {
-            console.log(error)
+            console.error('Error updating session:', error);
         }
-
 
 
     }
     async getSesions(userId: string) {
 
-        const queryuSesionTable = `
-        SELECT *
-        FROM device_sesions
-        WHERE user_id = $1
-        `
 
-        const parameter = [userId]
 
         try {
-            const sesion = await this.dataSource.query(queryuSesionTable, parameter)
+            const sessions = await this.sesions
+                .createQueryBuilder('s') // Создаем QueryBuilder для Devicessesions
+                .where('s.userIdFk = :userId', { userId }) // Условие фильтрации по userId
+                .getMany(); // Получаем все записи
 
-            const mapDateSesio = sesion.map((d) => {
+            // Преобразуем данные сессий
+            const mappedSessions = sessions.map((session) => {
                 return {
-                    deviceId: d.device_id,
-                    ip: d.ip,
-                    lastActiveDate: new Date(+d.last_active_date * 1000),
-                    title: d.title,
+                    deviceId: session.deviceId,
+                    ip: session.ip,
+                    lastActiveDate: new Date(+session.lastActiveDate), // Убедитесь, что формат времени правильный
+                    title: session.title,
                 };
             });
-            return mapDateSesio;
+
+            return mappedSessions;
 
         } catch (error) {
-            console.log(error)
+            console.error('Error fetching sessions:', error);
         }
+
+
+
 
     }
     async getSesionsId(deviceId: string) {
-        const queryuSesionTable = `
-        SELECT *
-        FROM device_sesions
-        WHERE device_id = $1
-        `
 
-        const parameter = [deviceId]
 
         try {
-            const sesion = await this.dataSource.query(queryuSesionTable, parameter)
-
-            return sesion[0]
+            return await this.sesions.findOne({
+                where: { deviceId: deviceId }, // Используем `where` для указания условия поиска
+            })
 
         } catch (error) {
             console.log(error)
@@ -297,31 +185,24 @@ export class UsersAuthSqlRepository {
     }
 
     async deleteSesions(deviceId: string, userId: string) {
-
-        const queryuSesionTable = ` 
-        DELETE FROM device_sesions
-        WHERE device_id <> $1 AND user_id = $2
-        `
-
-        const parameter = [deviceId, userId]
-
         try {
-            await this.dataSource.query(queryuSesionTable, parameter)
+            await this.sesions
+                .createQueryBuilder()
+                .delete() // Указываем, что хотим удалить записи
+                .from(SesionEntity) // Из какой сущности
+                .where('deviceId <> :deviceId', { deviceId }) // Условие для исключения
+                .andWhere('userIdFk = :userId', { userId }) // Условие для фильтрации по userId
+                .execute(); // Выполняем запрос
         } catch (error) {
-            console.log(error)
+            console.log('Error deleting sessions:', error);
         }
+
 
     }
     async deleteSesionsId(deviceId: string) {
-        const queryuSesionTable = ` 
-        DELETE FROM device_sesions
-        WHERE device_id = $1
-        `
-
-        const parameter = [deviceId]
-
         try {
-            await this.dataSource.query(queryuSesionTable, parameter)
+            await this.sesions.delete({ deviceId: deviceId })
+
         } catch (error) {
             console.log(error)
         }

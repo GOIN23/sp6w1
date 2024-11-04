@@ -3,27 +3,39 @@ import { Injectable } from '@nestjs/common';
 import { PostsCreateModel } from '../models/input/create-posts.input.bodel';
 import { PostViewModelLiKeArray } from '../type/typePosts';
 
-import { DataSource } from 'typeorm';
-import { CommentViewModelDb, PostLikeT } from '../../comments/type/typeCommen';
+import { InjectRepository } from '@nestjs/typeorm';
+import { DataSource, Repository } from 'typeorm';
+import { CommentsEntityT } from '../../comments/domain/comments.entityT';
+import { LikesInfoCommentsEntityT } from '../../comments/domain/likes.comments.entityT';
+import { CommentViewModelDb } from '../../comments/type/typeCommen';
+import { LikesInfoPostsEntityT } from '../domain/likes.posts.entityT';
+import { PostsEntityT } from '../domain/posts.entityT';
 
 
 @Injectable()
 export class PostSqlRepository {
-    constructor(protected dataSource: DataSource) { }
+    constructor(protected dataSource: DataSource, @InjectRepository(PostsEntityT) protected posts: Repository<PostsEntityT>,
+        @InjectRepository(CommentsEntityT) protected comments: Repository<CommentsEntityT>,
+        @InjectRepository(LikesInfoCommentsEntityT) protected likesInfoComments: Repository<LikesInfoCommentsEntityT>,
+        @InjectRepository(LikesInfoPostsEntityT) protected likesInfoPosts: Repository<LikesInfoPostsEntityT>,
 
 
-    async creatInDbPost(newUser: PostViewModelLiKeArray) {
-        const qureBlog = `
-        INSERT INTO posts (title, short_description, content, blog_name, created_at, fk_blog)
-        VALUES($1, $2, $3, $4, $5, $6)
-        RETURNING post_id
-        `
-        const parameter = [newUser.title, newUser.shortDescription, newUser.content, newUser.blogName, newUser.createdAt, newUser.blogId]
+    ) { }
 
+
+    async creatInDbPost(newPost: PostViewModelLiKeArray) {
         try {
-            const postId = await this.dataSource.query(qureBlog, parameter)
-            return postId[0].post_id
+            const result = await this.posts.insert({
+                blogName: newPost.blogName,
+                content: newPost.content,
+                createdAt: newPost.createdAt,
+                shortDescription: newPost.shortDescription,
+                title: newPost.title,
+                blogs: () => newPost.blogId
+            });
 
+
+            return result.identifiers[0].postId;
 
         } catch (error) {
             console.log(error)
@@ -31,127 +43,124 @@ export class PostSqlRepository {
         }
     }
 
-    async updatePost(id: string, postsModel: PostsCreateModel) {
-        const queryuPostTable = `
-        UPDATE posts
-        SET title = $1, short_description = $2, content = $3, fK_blog = $4
-        WHERE post_id = $4;
-    `;
-        const parameter = [postsModel.title, postsModel.shortDescription, postsModel.content, postsModel.blogId]
+    async updatePost(blogId: string, postsModel: PostsCreateModel) {
 
         try {
-            await this.dataSource.query(queryuPostTable, parameter)
+            const result = await this.posts
+                .createQueryBuilder()
+                .update(PostsEntityT)
+                .set({
+                    title: postsModel.title, shortDescription: postsModel.shortDescription, content: postsModel.content
+                }) // Устанавливаем isConfirmed в true
+                .where('blogIdFk = :blogId', { blogId }) // Фильтруем по userId
+                .execute(); // Выполняем запрос
+
+
+            return result.affected > 0; // Возвращаем true, если обновление прошло успешно
 
         } catch (error) {
-            console.log(error)
-
+            console.error('Error confirming email:', error);
+            return false; // Возвращаем false в случае ошибки
         }
+
+
     }
 
-    async deletePost(id: string) {
-        const queryPostTable = ` 
-        DELETE FROM posts
-        WHERE post_id = $1
-        `
-
-        const parameter = [id]
-
+    async deletePost(postId: string) {
         try {
-            await this.dataSource.query(queryPostTable, parameter)
+            const result = await this.posts.delete({ postId: +postId })
+
+
+            return result.affected > 0; // Возвращаем true, если обновление прошло успешно
+
         } catch (error) {
-            console.log(error)
+            console.error('Error confirming email:', error);
+            return false; // Возвращаем false в случае ошибки
         }
+
+
 
     }
 
     async createCommentPost(body: CommentViewModelDb): Promise<void> {
-        const queryCommentsTable = ` 
-        INSERT INTO comments (content, created_at, post_id_fk, user_fk_id)
-        VALUES($1, $2, $3, $4)
-        RETURNING comments_id
-        `
+        const result = await this.comments.insert({
+            content: body.content,
+            createdAt: body.createdAt,
+            posts: () => body.IdPost,
+            users: () => body.commentatorInfo.userId,
+        })
 
-        const parameter = [body.content, body.createdAt, body.IdPost, body.commentatorInfo.userId]
-
-
-        try {
-            const commentsId = await this.dataSource.query(queryCommentsTable, parameter)
-
-            return commentsId[0].comments_id
-        } catch (error) {
-            console.log(error)
-        }
-
+        return result.identifiers[0].commentsId;
 
 
 
     }
 
     async createLikeInfoMetaDataComment(body: any): Promise<void> {
-        const queryLikesInfosTable = ` 
-        INSERT INTO likes_info_comments (user_fk_id, comments_fk_id, created_at_info, status, user_login)
-        VALUES($1, $2, $3, $4, $5)
-        `
 
-        const parameterLikesInfo = [body.userID, body.commentId, body.createdAt, body.status, body.userLogin]
-        try {
-            await this.dataSource.query(queryLikesInfosTable, parameterLikesInfo)
 
-        } catch (error) {
-            console.log(error)
-        }
+        await this.likesInfoComments.insert({
+            createdAt: body.createdAt,
+            status: body.status,
+            comments: body.commentId,
+            users: body.userID,
+
+
+        })
+
+
 
     }
 
-    async findLikeDislakePost(userID: string, postId: string): Promise<PostLikeT | boolean> {
-        const queryPosts = `
-        SELECT *
-        FROM likes_info_posts 
-        WHERE post_fk_id = $1 AND user_fk_id = $2
-      `
-
-        const parametr = [postId, userID]
+    async findLikeDislakePost(userID: string, postId: string): Promise<LikesInfoPostsEntityT | boolean> {
 
         try {
-            const result = await this.dataSource.query(queryPosts, parametr)
+            const likesInfoPosts = await this.likesInfoPosts.createQueryBuilder('l').where('l.postsId = :postId', { postId }).andWhere('l.userFkId = :userID', { userID }).getOne()
+            return likesInfoPosts
 
-            return result[0]
         } catch (error) {
-            console.log(error)
 
+            console.log(error)
         }
+
+
+
 
     }
     async addLikeDislikeInPosts(likesPostInfo: any) {
-        const queryLikesInfosTablePost = ` 
-        INSERT INTO likes_info_posts (post_fk_id, status, user_fk_id, user_login,created_at_inf)
-        VALUES($1, $2, $3, $4, $5)
-        `
 
-        const parameterLikesInfo = [likesPostInfo.postId, likesPostInfo.status, likesPostInfo.userID, likesPostInfo.login, likesPostInfo.createdAt]
         try {
-            await this.dataSource.query(queryLikesInfosTablePost, parameterLikesInfo)
-
+            await this.likesInfoPosts.insert({
+                posts: likesPostInfo.postId,
+                createdAt: likesPostInfo.createdAt,
+                status: likesPostInfo.status,
+                users: likesPostInfo.userID
+            })
         } catch (error) {
             console.log(error)
-        }
 
+        }
 
     }
     async updateLikeStatusInPosts(userId: string, likeStatus: string, postId: string) {
-        const queryuPostTable = `
-        UPDATE likes_info_posts
-        SET status = $1
-        WHERE user_fk_id = $2 AND post_fk_id = $3;
-    `;
-        const parameter = [likeStatus, userId, postId]
 
         try {
-            await this.dataSource.query(queryuPostTable, parameter)
+            await this.likesInfoPosts
+                .createQueryBuilder()
+                .update(LikesInfoPostsEntityT)
+                .set({ status: likeStatus })
+                .where('postsId = :postId', { postId })
+                .andWhere('userFkId = :userId', { userId })
+                .execute(); // Выполняем запрос
 
         } catch (error) {
             console.log(error)
 
         }
+
+
+
+
+
     }
 }

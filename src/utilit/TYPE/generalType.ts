@@ -66,3 +66,11 @@ export type DeviceViewModel = {
   lastActiveDate: string;
   deviceId: string;
 };
+
+
+export type ResultObject = {
+  success: boolean;
+  errorMessage?: string;
+  data?: any;
+}
+

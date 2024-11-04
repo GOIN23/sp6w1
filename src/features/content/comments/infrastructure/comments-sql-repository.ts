@@ -1,116 +1,102 @@
 import { Injectable } from '@nestjs/common';
-import { DataSource } from 'typeorm';
+import { InjectRepository } from '@nestjs/typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { UpdateCommentCommand } from '../application/use-case/update-use-case';
+import { CommentsEntityT } from '../domain/comments.entityT';
+import { LikesInfoCommentsEntityT } from '../domain/likes.comments.entityT';
 
 
 @Injectable()
 export class CommentsSqlRepository {
-    constructor(protected dataSource: DataSource) { }
+    constructor(protected dataSource: DataSource,
+        @InjectRepository(CommentsEntityT)
+        protected comments: Repository<CommentsEntityT>,
+        @InjectRepository(LikesInfoCommentsEntityT)
+        protected likesInfoComments: Repository<LikesInfoCommentsEntityT>
+
+    ) { }
 
     async updateComment(dtoInputDate: UpdateCommentCommand) {
 
-
-        const queryuPostTable = `
-        UPDATE comments
-        SET content = $1
-        WHERE comments_id = $2;
-    `;
-        const parameter = [dtoInputDate.content, dtoInputDate.id]
-
         try {
-            await this.dataSource.query(queryuPostTable, parameter)
+            const result = await this.comments
+                .createQueryBuilder()
+                .update(CommentsEntityT)
+                .set({
+                    content: dtoInputDate.content
+                }) // Устанавливаем isConfirmed в true
+                .where('commentsId = :commentsId', { commentsId: dtoInputDate.id }) // Фильтруем по userId
+                .execute(); // Выполняем запрос
+
+
+            return result.affected > 0; // Возвращаем true, если обновление прошло успешно
 
         } catch (error) {
-            console.log(error)
-
+            console.error('Error confirming email:', error);
+            return false; // Возвращаем false в случае ошибки
         }
 
     }
-
     async deleteCommetn(id: string) {
 
-        const qureLikesInfoComments = `
-         DELETE FROM likes_info_comments
-         WHERE comments_fk_id = $1
-        `
-
-        const parameterLikesInfo = [id]
-
         try {
-            await this.dataSource.query(qureLikesInfoComments, parameterLikesInfo)
+            await this.comments.delete({ commentsId: +id })
+
         } catch (error) {
             console.log(error)
         }
-
-        const queryCommentsTable = ` 
-        DELETE FROM comments
-        WHERE comments_id = $1
-        `
-
-        const parameterComment = [id]
-
-        try {
-            await this.dataSource.query(queryCommentsTable, parameterComment)
-        } catch (error) {
-            console.log(error)
-        }
-
-
-
     }
-
     async findLikeDislakeComment(userID: string, commentId: string) {
 
-
-        const qureComment = `SELECT *
-        FROM likes_info_comments
-        WHERE user_fk_id = $1 AND comments_fk_id = $2
-                `
-        const parametrComment = [userID, commentId]
-
         try {
-            const result = await this.dataSource.query(qureComment, parametrComment)
+            const likesInfoComments = await this.likesInfoComments
+                .createQueryBuilder('l')
+                .where('l.commentsId = :commentId', { commentId })
+                .andWhere('l.userFkId = :userID', { userID })
+                .getOne()
 
-            return result[0]
+            return likesInfoComments
         } catch (error) {
-            console.log(error)
 
+            console.log(error)
         }
 
-
     }
-
     async creatLikesDislek(body: any) {
-        const queryCommentsTable = ` 
-        INSERT INTO likes_info_comments (user_fk_id, comments_fk_id, created_at_info, status, user_login)
-        VALUES($1, $2, $3, $4, $5)
-        `
-
-        const parameter = [body.userID, body.commentId, body.createdAt, body.status, body.userLogin]
-
-
         try {
-            const commentsId = await this.dataSource.query(queryCommentsTable, parameter)
+            await this.likesInfoComments.insert({
+                users: body.userID,
+                comments: body.commentId,
+                createdAt: body.createdAt,
+                status: body.status
+            })
 
-            return commentsId[0].comments_id
         } catch (error) {
             console.log(error)
         }
     }
     async updateLikeStatusInComment(userId: string, likeStatus: string, commentId: string) {
-        const queryuPostTable = `
-        UPDATE likes_info_comments
-        SET status = $1
-        WHERE user_fk_id = $2 AND comments_fk_id = $3;
-    `;
-        const parameter = [likeStatus, userId, commentId]
 
         try {
-            await this.dataSource.query(queryuPostTable, parameter)
+            const result = await this.comments
+                .createQueryBuilder()
+                .update(LikesInfoCommentsEntityT)
+                .set({
+                    status: likeStatus
+                }) // Устанавливаем isConfirmed в true
+                .where('commentsId = :commentId', { commentId })
+                .andWhere('userFkId = :userId', { userId }) // Фильтруем по userId
+                .execute(); // Выполняем запрос
+
+
+            return result.affected > 0; // Возвращаем true, если обновление прошло успешно
 
         } catch (error) {
-            console.log(error)
-
+            console.error('Error confirming email:', error);
+            return false; // Возвращаем false в случае ошибки
         }
+
+
+
     }
 }

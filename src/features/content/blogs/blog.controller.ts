@@ -22,10 +22,7 @@ import { BlogCreateModel } from "./models/input/create-blog.input.bodel";
 
 @Controller('sa/blogs')
 export class BlogsController {
-    constructor(protected blogService: BlogService, protected blogsQueryRepository: BlogsQueryRepository, protected postsService: PostsService, protected postsQueryRepository: PostsQueryRepository, protected jwtService: JwtService, protected blogsSqlQueryRepository: BlogsSqlQueryRepository, protected postsQuerySqlRepository: PostsQuerySqlRepository) {
-
-    }
-
+    constructor(protected blogService: BlogService, protected blogsQueryRepository: BlogsQueryRepository, protected postsService: PostsService, protected postsQueryRepository: PostsQueryRepository, protected jwtService: JwtService, protected blogsSqlQueryRepository: BlogsSqlQueryRepository, protected postsQuerySqlRepository: PostsQuerySqlRepository) { }
 
     @Post("")
     @UseGuards(AuthGuard)
@@ -35,7 +32,6 @@ export class BlogsController {
 
         return await this.blogsSqlQueryRepository.getById(blogId)
     }
-
 
     @Post("/:id/posts")
     @UseGuards(AuthGuard)
@@ -76,6 +72,7 @@ export class BlogsController {
 
         return blogs
     }
+
     @Get("/:id")
     @UseGuards(AuthGuard)
     @HttpCode(200)
@@ -138,6 +135,7 @@ export class BlogsController {
     @UseGuards(AuthGuard)
     @HttpCode(204)
     async putBlogPost(@Param("blogId") blogId: string, @Param("postId") postId: string, @Body() postModel: PostsCreateModel2) {
+        debugger
 
         const blog = await this.blogsSqlQueryRepository.getById(blogId)
 
@@ -159,7 +157,6 @@ export class BlogsController {
 
     }
 
-
     @Delete("/:id")
     @UseGuards(AuthGuard)
     @HttpCode(204)
@@ -175,12 +172,10 @@ export class BlogsController {
         await this.blogService.deletBlog(id)
     }
 
-
     @Delete("/:blogId/posts/:postId")
     @UseGuards(AuthGuard)
     @HttpCode(204)
     async deletBlogByPostId(@Param("blogId") blogId: string, @Param("postId") postId: string) {
-        debugger
 
         const blog = await this.blogsSqlQueryRepository.getById(blogId)
 

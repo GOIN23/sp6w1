@@ -19,6 +19,7 @@ export class UpdateLikeDislikeOnCommentUseCase implements ICommandHandler<Update
     constructor(protected commentsRepository: CommentsRepository, protected commentsSqlRepository: CommentsSqlRepository) { }
 
     async execute(dtoInputDate: UpdateLIkeDeslikeCommentCommand) {
+        debugger
         const fintLikeDislake = await this.commentsSqlRepository.findLikeDislakeComment(dtoInputDate.userId, dtoInputDate.commentId);
 
         if (!fintLikeDislake) {

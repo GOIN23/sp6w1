@@ -6,7 +6,7 @@
 
 export class QueryPostsParamsDto {
 
-    sortBy: string = 'created_at'; // значение по умолчанию
+    sortBy: string = 'createdAt'; // значение по умолчанию
 
     sortDirection: 'asc' | 'desc' = 'desc'; // значение по умолчанию
 
