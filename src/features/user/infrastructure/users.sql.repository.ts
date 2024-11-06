@@ -64,7 +64,7 @@ export class UsersSqlRepository {
 
 
     }
-    async findIsLogin(login: string): Promise<ResultObject> {
+    async findIsLogin(login: string): Promise<ResultObject<UserEnity | null>> {
 
 
 
@@ -74,16 +74,16 @@ export class UsersSqlRepository {
         })
         if (!user) {
             return {
-                success: false,
+                result: false,
                 errorMessage: `no user with such logins:${login}`,
-                data: []
+                data: null
             }
         }
 
         return {
-            success: true,
+            result: true,
             errorMessage: `there is a user with such logins:${login}`,
-            data: [user]
+            data: user
         }
 
 
@@ -119,7 +119,7 @@ export class UsersSqlRepository {
 
         await this.dataSource.query(queryuUserTable, parametersUserTable)
     }
-    async findIsEmail(email: string): Promise<ResultObject> {
+    async findIsEmail(email: string): Promise<ResultObject<UserEnity | null>> {
 
 
 
@@ -128,16 +128,16 @@ export class UsersSqlRepository {
         })
         if (!user) {
             return {
-                success: false,
+                result: false,
                 errorMessage: `no user with such email:${email}`,
-                data: []
+                data: null
             }
         }
 
         return {
-            success: true,
+            result: true,
             errorMessage: `there is a user with such email:${email}`,
-            data: [user]
+            data: user
         }
 
 

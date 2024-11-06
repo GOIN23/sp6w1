@@ -1,7 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
 import { Model } from "mongoose";
-import { Paginator } from "../../../../utilit/TYPE/generalType";
+import { PaginatorT } from "../../../../utilit/TYPE/generalType";
 import { Comments } from "../domain/comments.entity";
 import { LikesCommentsInfo } from "../domain/likes.entity";
 import { CommentViewModel, CommentViewModelDb, statusCommentLike } from "../type/typeCommen";
@@ -45,7 +45,7 @@ export class CommentsQueryRepository {
         return mapData;
     }
 
-    async getCommentPosts(IdPost: string, query: any, userId?: string): Promise<Paginator<CommentViewModel> | { error: string }> {
+    async getCommentPosts(IdPost: string, query: any, userId?: string): Promise<PaginatorT<CommentViewModel> | { error: string }> {
         const filter = { IdPost };
 
         try {

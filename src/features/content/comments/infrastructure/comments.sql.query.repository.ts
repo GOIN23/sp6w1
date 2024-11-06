@@ -1,10 +1,10 @@
 import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { DataSource, Repository } from "typeorm";
-import { Paginator, ResultObject } from "../../../../utilit/TYPE/generalType";
+import { PaginatorT, ResultObject } from "../../../../utilit/TYPE/generalType";
 import { CommentsEntityT } from "../domain/comments.entityT";
 import { LikesInfoCommentsEntityT } from "../domain/likes.comments.entityT";
-import { CommentViewModel, CommentViewModelDb, statusCommentLike } from "../type/typeCommen";
+import { CommentViewModel, statusCommentLike } from "../type/typeCommen";
 
 @Injectable()
 export class CommentsQuerySqlRepository {
@@ -15,9 +15,6 @@ export class CommentsQuerySqlRepository {
     }
 
     async getCommentById(commentsId: string, userId: string) {
-
-
-
 
         const comments = await this.likesInfoComments
             .createQueryBuilder('l')
@@ -33,7 +30,7 @@ export class CommentsQuerySqlRepository {
 
 
 
-        let status: statusCommentLike;
+        let status: statusCommentLike = statusCommentLike.None
 
         if (userId === null) {
             status = statusCommentLike.None;
@@ -44,7 +41,13 @@ export class CommentsQuerySqlRepository {
                 .andWhere('l.userFkId = :userId', { userId })
                 .getMany()
 
-            status = (qureLikesInfoComments[0].status as statusCommentLike) || statusCommentLike.None
+            try {
+                status = (qureLikesInfoComments[0].status as statusCommentLike) || statusCommentLike.None
+
+            } catch (error) {
+
+                console.log(error)
+            }
         }
 
 
@@ -80,14 +83,14 @@ export class CommentsQuerySqlRepository {
             likesInfo: {
                 dislikesCount: +qureCountLikeDislike.countDislike,
                 likesCount: +qureCountLikeDislike.countLike,
-                myStatus: status,
+                myStatus: status || statusCommentLike.None,
             },
         };
 
         return mapData;
     }
 
-    async complianceCheckUserComment(commentId: string, userId: string): Promise<ResultObject> {
+    async complianceCheckUserComment(commentId: string, userId: string): Promise<ResultObject<CommentsEntityT>> {
         try {
             const result = await this.comments.findOne({
                 where: { commentsId: +commentId },
@@ -97,25 +100,29 @@ export class CommentsQuerySqlRepository {
 
             if (result.users.userId !== +userId) {
                 return {
-                    success: false,
+                    result: false,
                     errorMessage: "Forbidden",
-                    data: {}
+                    data: null
                 }
             }
 
 
 
             return {
-                success: true,
+                result: true,
                 errorMessage: "fulfilled",
                 data: result
             }
 
         } catch (e) {
-
-            console.log(e)
+            return {
+                result: false,
+                errorMessage: "not found",
+                data: null
+            }
         }
     }
+
     async findComment(commentId: string) {
         try {
             const result = await this.likesInfoComments
@@ -134,37 +141,38 @@ export class CommentsQuerySqlRepository {
 
     }
 
-    async getCommentPosts(IdPost: string, query: any, userId?: string): Promise<Paginator<CommentViewModel> | { error: string }> {
+    async getCommentPosts(IdPost: string, query: any, userId?: string): Promise<PaginatorT<CommentViewModel> | { error: string }> {
+
+        const sortDirection: "ASC" | "DESC" = query.sortDirection === 'desc' ? 'DESC' : 'ASC';
+        const searchTitleTerm = query.searchNameTerm ? `%${query.searchNameTerm.toLowerCase()}%` : null;
+
+        const [result, totalCount] = await this.comments
+            .createQueryBuilder('c')
+            .leftJoinAndSelect('c.users', 'u')
+            .where(searchTitleTerm ? 'LOWER(p.title) LIKE :searchTitleTerm' : '1=1', {
+                searchTitleTerm
+            })
+            .andWhere('c.postFkId = :IdPost', { IdPost })
+            .orderBy(`c.${query.sortBy} COLLATE "C"`, sortDirection)
+            .limit(query.pageSize)
+            .offset((query.pageNumber - 1) * query.pageSize)
+            .getManyAndCount();
 
 
-        const sortBy = query.sortBy || 'created_at'; // по умолчанию сортировка по 'login'
 
-        const sortDirection = query.sortDirection === 'desc' ? 'DESC' : 'ASC';
 
-        const queryuUserTable = `
-        SELECT *
-        FROM comments
-        WHERE (LOWER(created_at) LIKE LOWER(CONCAT('%', $1::TEXT, '%')) OR $1 IS NULL)
-        AND post_id_fk = $2
-        ORDER BY ${sortBy} COLLATE "C" ${sortDirection} 
-        LIMIT $3 OFFSET $4;
-    `;
 
-        const parametr = [query.searchNameTerm || '', IdPost, query.pageSize, (query.pageNumber - 1) * query.pageSize];
+        const commentMap = await this.mapComments(result, userId);
 
-        const items = await this.dataSource.query(queryuUserTable, parametr)
-
-        const commentMap = await this.mapComments(items, userId);
-
-        const countComments = `
-        SELECT COUNT(*)
-        FROM comments
-        WHERE (LOWER(created_at) LIKE LOWER(CONCAT('%', $1::TEXT, '%')) OR $1 IS NULL)
-        AND post_id_fk = $2
-    `;
-        const parametrCommentCount = [query.searchNameTerm || '', IdPost]
-        const totalItemsResult = await this.dataSource.query(countComments, parametrCommentCount);
-        const totalCount = parseInt(totalItemsResult[0].count, 10); // Общее 
+        //     const countComments = `
+        //     SELECT COUNT(*)
+        //     FROM comments
+        //     WHERE (LOWER(created_at) LIKE LOWER(CONCAT('%', $1::TEXT, '%')) OR $1 IS NULL)
+        //     AND post_id_fk = $2
+        // `;
+        //     const parametrCommentCount = [query.searchNameTerm || '', IdPost]
+        //     const totalItemsResult = await this.dataSource.query(countComments, parametrCommentCount);
+        //     // const totalCount = parseInt(totalItemsResult[0].count, 10); // Общее 
 
 
 
@@ -178,60 +186,120 @@ export class CommentsQuerySqlRepository {
 
     }
 
-    private async mapComments(items: CommentViewModelDb[], userId?: string): Promise<any[]> {
-        const promises = items.map(async (comment: any) => {
+    private async mapComments(items: any[], userId?: string): Promise<any[]> {
+        const promises = items.map(async (comment: CommentsEntityT) => {
 
-            const qureCount = `
-            SELECT count(*) as count_dislike, (SELECT count(*) as count_like from likes_info_comments WHERE likes_info_comments.status = 'Like' AND comments_fk_id = $1)
-            FROM likes_info_comments c
-            WHERE c.status = 'Dislike' AND comments_fk_id = $1
-            `
-            const parametrCount = [comment.comments_id]
+            let status: statusCommentLike = statusCommentLike.None
 
-            const countLikes = await this.dataSource.query(qureCount, parametrCount)
-
-            const resComment = `
-            SELECT likes_info_comments.user_fk_id, comments_fk_id, user_login
-            FROM comments
-            LEFT JOIN likes_info_comments ON likes_info_comments.comments_fk_id = comments.comments_id
-       `;
-
-
-            const findComment = await this.dataSource.query(resComment)
-
-            const userStatus = `
-             SELECT *
-             FROM likes_info_comments
-             WHERE user_fk_id = $1 AND comments_fk_id = $2
-          `;
-
-            const parametr = [userId === null ? null : userId, comment.comments_id]
-
-            const resultUserStatus = await this.dataSource.query(userStatus, parametr)
-
-
-            let resultStatus
-            if (!resultUserStatus[0]) {
-                resultStatus = statusCommentLike.None
+            if (userId === null) {
+                status = statusCommentLike.None;
             } else {
-                resultStatus = resultUserStatus[0]!.status
+                const qureLikesInfoComments = await this.likesInfoComments
+                    .createQueryBuilder('l')
+                    .where('l.commentsId = :commentsId', { commentsId: comment.commentsId })
+                    .andWhere('l.userFkId = :userId', { userId })
+                    .getMany()
+
+                try {
+                    status = (qureLikesInfoComments[0].status as statusCommentLike) || statusCommentLike.None
+
+                } catch (error) {
+                    console.log(error)
+                }
             }
 
 
-            return {
-                id: comment.comments_id.toString(),
-                content: comment.content,
+
+            const qureCountLikeDislike = await this.likesInfoComments
+                .createQueryBuilder('l')
+                .select('COUNT(*)', 'countDislike')
+                .addSelect(
+                    (subQuery) => {
+                        return subQuery.select("COUNT(*)")
+                            .from(LikesInfoCommentsEntityT, "likes")
+                            .where("likes.status = 'Like'")
+                            .andWhere("likes.commentsId = :commentsId", { commentsId: comment.commentsId })
+                    },
+                    'countLike'
+                )
+                .where("l.status = 'Dislike'")
+                .andWhere("l.commentsId = :commentsId", { commentsId: comment.commentsId })
+                .getRawOne();
+
+
+
+
+            const mapData: CommentViewModel = {
+                id: comment.commentsId.toString(),
                 commentatorInfo: {
-                    userId: findComment[0].user_fk_id.toString(),
-                    userLogin: findComment[0].user_login,
+                    userId: comment.users.userId.toString(),
+                    userLogin: comment.users.login
+
                 },
-                createdAt: comment.created_at,
+                content: comment.content,
+                createdAt: comment.createdAt,
                 likesInfo: {
-                    likesCount: +countLikes[0].count_like,
-                    dislikesCount: +countLikes[0].count_dislike,
-                    myStatus: resultStatus,
+                    dislikesCount: +qureCountLikeDislike.countDislike,
+                    likesCount: +qureCountLikeDislike.countLike,
+                    myStatus: status,
                 },
             };
+
+            return mapData;
+
+
+
+            //         const qureCount = `
+            //         SELECT count(*) as count_dislike, (SELECT count(*) as count_like from likes_info_comments WHERE likes_info_comments.status = 'Like' AND comments_fk_id = $1)
+            //         FROM likes_info_comments c
+            //         WHERE c.status = 'Dislike' AND comments_fk_id = $1
+            //         `
+            //         const parametrCount = [comment.comments_id]
+
+            //         const countLikes = await this.dataSource.query(qureCount, parametrCount)
+
+            //         const resComment = `
+            //         SELECT likes_info_comments.user_fk_id, comments_fk_id, user_login
+            //         FROM comments
+            //         LEFT JOIN likes_info_comments ON likes_info_comments.comments_fk_id = comments.comments_id
+            //    `;
+
+
+            //         const findComment = await this.dataSource.query(resComment)
+
+            //         const userStatus = `
+            //          SELECT *
+            //          FROM likes_info_comments
+            //          WHERE user_fk_id = $1 AND comments_fk_id = $2
+            //       `;
+
+            //         const parametr = [userId === null ? null : userId, comment.comments_id]
+
+            //         const resultUserStatus = await this.dataSource.query(userStatus, parametr)
+
+
+            //         let resultStatus
+            //         if (!resultUserStatus[0]) {
+            //             resultStatus = statusCommentLike.None
+            //         } else {
+            //             resultStatus = resultUserStatus[0]!.status
+            //         }
+
+
+            //         return {
+            //             id: comment.comments_id.toString(),
+            //             content: comment.content,
+            //             commentatorInfo: {
+            //                 userId: findComment[0].user_fk_id.toString(),
+            //                 userLogin: findComment[0].user_login,
+            //             },
+            //             createdAt: comment.created_at,
+            //             likesInfo: {
+            //                 likesCount: +countLikes[0].count_like,
+            //                 dislikesCount: +countLikes[0].count_dislike,
+            //                 myStatus: resultStatus,
+            //             },
+            //         };
         })
 
 

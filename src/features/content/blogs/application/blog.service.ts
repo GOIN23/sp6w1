@@ -1,16 +1,15 @@
 
 import { Injectable } from "@nestjs/common";
-import { BlogRepository } from "../infrastructure/blogs.repository";
-import { BlogCreateModel } from "../models/input/create-blog.input.bodel";
-import { blogT } from "../TYPE/type";
 import { BlogSqlRepository } from "../infrastructure/blogs.sql.repository";
+import { BlogCreateModel } from "../models/input/create-blog.input.bodel";
+import { blogInputT } from "../type/type";
 
 @Injectable()
 export class BlogService {
-    constructor( protected blogSqlRepository: BlogSqlRepository) { }
+    constructor(protected blogSqlRepository: BlogSqlRepository) { }
 
-    async creatBlog(blogModel: BlogCreateModel) {
-        const newUser: blogT = {
+    async creatBlog(blogModel: BlogCreateModel): Promise<string> {
+        const newUser: blogInputT = {
             name: blogModel.name,
             description: blogModel.description,
             websiteUrl: blogModel.websiteUrl,
@@ -21,13 +20,13 @@ export class BlogService {
 
     }
 
-    async updateBlog(id: string, inputBlog: BlogCreateModel) {
-        await this.blogSqlRepository.updateBlog(id, inputBlog)
+    async updateBlog(blogId: string, inputBlog: BlogCreateModel): Promise<void> {
+        await this.blogSqlRepository.updateBlog(blogId, inputBlog)
 
 
     }
 
-    async deletBlog(id: string) {
+    async deletBlog(id: string): Promise<void> {
         await this.blogSqlRepository.deletBlog(id)
     }
 

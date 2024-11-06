@@ -88,7 +88,6 @@ export class UsersAuthSqlRepository {
     }
 
     async addSesionUser(userSession: any) {
-        debugger
 
         const result = await this.sesions.insert({
             deviceId: userSession.deviceId,

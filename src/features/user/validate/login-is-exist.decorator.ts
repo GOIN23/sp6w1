@@ -16,7 +16,7 @@ export class LoginIsExistContsraint implements ValidatorConstraintInterface {
     async validate(value: any, validationArguments: ValidationArguments) {
         const loginIsExists = await this.usersSqlRepository.findIsLogin(value)
 
-        if (!loginIsExists.success) {
+        if (!loginIsExists.result) {
             return true
         } else {
             return false

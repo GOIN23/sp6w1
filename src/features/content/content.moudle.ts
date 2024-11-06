@@ -7,11 +7,8 @@ import { UserModule } from "../user/user.module";
 import { BlogsControllerGet } from "./blog.contr.get";
 import { BlogService } from "./blogs/application/blog.service";
 import { BlogsController } from "./blogs/blog.controller";
-import { Blog, BlogSchema } from "./blogs/domain/blog.entity";
 import { BlogsEntityT } from "./blogs/domain/blog.entityT";
-import { BlogsQueryRepository } from "./blogs/infrastructure/blogs.query-repository";
 import { BlogsSqlQueryRepository } from "./blogs/infrastructure/blogs.query.sql-repository";
-import { BlogRepository } from "./blogs/infrastructure/blogs.repository";
 import { BlogSqlRepository } from "./blogs/infrastructure/blogs.sql.repository";
 import { CommentsController } from "./comments/api/comments-controller";
 import { CommentsService } from "./comments/application/commets.service";
@@ -39,7 +36,7 @@ import { PostsController } from "./posts/posts.controller";
 
 
 
-const blogsProvides: Provider[] = [BlogService, BlogRepository, BlogsQueryRepository, NameIsExistConstraint, BlogsSqlQueryRepository, BlogSqlRepository]
+const blogsProvides: Provider[] = [BlogService, NameIsExistConstraint, BlogsSqlQueryRepository, BlogSqlRepository]
 
 
 const postsProvedis: Provider[] = [PostsService, PostsQueryRepository, PostRepository, PostSqlRepository, PostsQuerySqlRepository]
@@ -48,7 +45,7 @@ const useCaseComment: Provider[] = [DeleteeCommentrUseCase, updateCommentUseCase
 
 
 @Module({
-    imports: [TypeOrmModule.forFeature([BlogsEntityT, PostsEntityT, CommentsEntityT, LikesInfoPostsEntityT, LikesInfoCommentsEntityT]), MongooseModule.forFeature([{ name: Blog.name, schema: BlogSchema }, { name: Posts.name, schema: PostSchema }, { name: LikesCommentsInfo.name, schema: LikesCommentsSchema }, { name: LikesPostInfo.name, schema: LLikesPostInfoSchema }, { name: Comments.name, schema: CommentSchema }]), AuthModule, UserModule],
+    imports: [TypeOrmModule.forFeature([BlogsEntityT, PostsEntityT, CommentsEntityT, LikesInfoPostsEntityT, LikesInfoCommentsEntityT]), MongooseModule.forFeature([{ name: Posts.name, schema: PostSchema }, { name: LikesCommentsInfo.name, schema: LikesCommentsSchema }, { name: LikesPostInfo.name, schema: LLikesPostInfoSchema }, { name: Comments.name, schema: CommentSchema }]), AuthModule, UserModule],
     controllers: [BlogsController, PostsController, CommentsController, BlogsControllerGet],
     providers: [...blogsProvides, ...postsProvedis, ...commentsProvides, ...useCaseComment],
 

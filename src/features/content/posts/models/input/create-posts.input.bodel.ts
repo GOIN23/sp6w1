@@ -40,6 +40,9 @@ export class PostsCreateModel2 {
     @MaxLength(1000)
     content: string
 
+    @IsOptional()
+    blogId: string
+
 
 }
 

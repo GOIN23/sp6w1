@@ -6,7 +6,7 @@ import { CommentViewModelDb } from '../../comments/type/typeCommen';
 import { PostRepository } from "../infrastructure/posts.repository";
 import { PostSqlRepository } from '../infrastructure/posts.sql.repository';
 import { PostsCreateModel } from "../models/input/create-posts.input.bodel";
-import { statusCommentLike } from "../type/typePosts";
+import { postInputT, statusCommentLike } from "../type/typePosts";
 
 
 @Injectable()
@@ -14,7 +14,7 @@ export class PostsService {
     constructor(private postRepository: PostRepository, protected postSqlRepository: PostSqlRepository, protected usersSqlRepository: UsersSqlRepository) { }
 
     async creatPosts(postsModel: PostsCreateModel, blog: BlogOutputModel) {
-        const newUser: any = {
+        const newUser: postInputT = {
             blogId: postsModel.blogId,
             blogName: blog.name,
             content: postsModel.content,
@@ -36,11 +36,11 @@ export class PostsService {
 
     }
 
-    async updatePost(id: string, postsModel: PostsCreateModel) {
+    async updatePost(id: string, postsModel: PostsCreateModel): Promise<void> {
         await this.postSqlRepository.updatePost(id, postsModel)
     }
 
-    async deletePost(id: string) {
+    async deletePost(id: string): Promise<void> {
         await this.postSqlRepository.deletePost(id)
     }
 

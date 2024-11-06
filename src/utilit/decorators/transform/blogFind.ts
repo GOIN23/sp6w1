@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
+import { InjectRepository } from '@nestjs/typeorm';
 import { registerDecorator, ValidationArguments, ValidationOptions, ValidatorConstraint, ValidatorConstraintInterface } from 'class-validator';
-import { Model } from 'mongoose';
-import { Blog } from '../../../features/content/blogs/domain/blog.entity';
+import { Repository } from 'typeorm';
+import { BlogsEntityT } from '../../../features/content/blogs/domain/blog.entityT';
 
 
 
@@ -10,10 +10,12 @@ import { Blog } from '../../../features/content/blogs/domain/blog.entity';
 @ValidatorConstraint({ name: 'NameIsExist', async: false })
 @Injectable()
 export class NameIsExistConstraint implements ValidatorConstraintInterface {
-    constructor(@InjectModel(Blog.name) private blogModel: Model<Blog>) { }
+    constructor(@InjectRepository(BlogsEntityT) protected blogs: Repository<BlogsEntityT>) { }
     async validate(value: any, args: ValidationArguments) {
         try {
-            const nameIsExist = await this.blogModel.findOne({ _id: value });
+            const nameIsExist = await this.blogs.findOne({
+                where: { blogId: value }
+            });
             return !!nameIsExist;
 
 

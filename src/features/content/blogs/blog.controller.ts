@@ -1,6 +1,5 @@
 import { Body, Controller, Delete, Get, HttpCode, HttpException, HttpStatus, Param, Post, Put, Query, Request, UseGuards } from "@nestjs/common";
 import { JwtService } from '@nestjs/jwt';
-// import { AuthGuard } from "src/utilit/guards/basic-auth-guards";
 import { AuthGuard } from "../../../utilit/guards/basic-auth-guards";
 import { PostsService } from "../posts/application/posts.service";
 import { PostsQueryRepository } from "../posts/infrastructure/posts.query-repository";
@@ -8,12 +7,8 @@ import { PostsQuerySqlRepository } from "../posts/infrastructure/posts.query.sql
 import { PostsCreateModel2 } from "../posts/models/input/create-posts.input.bodel";
 import { BlogService } from "./application/blog.service";
 import { DefaultValuesPipe, QueryBlogsParamsDto } from "./dto/dto.query.body";
-import { BlogsQueryRepository } from "./infrastructure/blogs.query-repository";
 import { BlogsSqlQueryRepository } from "./infrastructure/blogs.query.sql-repository";
 import { BlogCreateModel } from "./models/input/create-blog.input.bodel";
-// import { PostsCreateModel } from "src/posts/models/input/create-posts.input.bodel";
-// import { PostsQueryRepository } from 'src/posts/infrastructure/posts.query-repository';
-
 
 
 
@@ -22,7 +17,7 @@ import { BlogCreateModel } from "./models/input/create-blog.input.bodel";
 
 @Controller('sa/blogs')
 export class BlogsController {
-    constructor(protected blogService: BlogService, protected blogsQueryRepository: BlogsQueryRepository, protected postsService: PostsService, protected postsQueryRepository: PostsQueryRepository, protected jwtService: JwtService, protected blogsSqlQueryRepository: BlogsSqlQueryRepository, protected postsQuerySqlRepository: PostsQuerySqlRepository) { }
+    constructor(protected blogService: BlogService, protected postsService: PostsService, protected postsQueryRepository: PostsQueryRepository, protected jwtService: JwtService, protected blogsSqlQueryRepository: BlogsSqlQueryRepository, protected postsQuerySqlRepository: PostsQuerySqlRepository) { }
 
     @Post("")
     @UseGuards(AuthGuard)
@@ -30,7 +25,8 @@ export class BlogsController {
     async createBlog(@Body() blogModel: BlogCreateModel) {
         const blogId = await this.blogService.creatBlog(blogModel)
 
-        return await this.blogsSqlQueryRepository.getById(blogId)
+        const blog = await this.blogsSqlQueryRepository.getById(blogId)
+        return blog.data
     }
 
     @Post("/:id/posts")
@@ -40,16 +36,10 @@ export class BlogsController {
 
         const blog = await this.blogsSqlQueryRepository.getById(id)
 
-        if (!blog) {
-            throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+        postsModel.blogId = blog.data.id
 
-        }
+        let payload: any
 
-        //@ts-ignore
-        postsModel.blogId = blog.id
-        //@ts-ignore
-        const postId = await this.postsService.creatPosts(postsModel, blog)
-        let payload
         try {
             const res = req.headers.authorization.split(' ')[1]
             payload = this.jwtService.verify(res)
@@ -58,10 +48,22 @@ export class BlogsController {
         }
 
 
-        const userId = payload ? payload.userId : null
+        if (!blog.result) {
+            throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+
+        }
+
+        const postId = await this.postsService.creatPosts(postsModel, blog.data)
 
 
-        return await this.postsQuerySqlRepository.getById(postId, userId)
+
+        const userId: string = payload ? payload.userId : null
+
+
+        const post = await this.postsQuerySqlRepository.getById(postId.data, userId)
+
+
+        return post.data
     }
 
     @Get("")
@@ -70,7 +72,7 @@ export class BlogsController {
     async getBlogs(@Query(new DefaultValuesPipe()) qurePagination: QueryBlogsParamsDto) {
         const blogs = await this.blogsSqlQueryRepository.getBlogs(qurePagination)
 
-        return blogs
+        return blogs.data
     }
 
     @Get("/:id")
@@ -80,12 +82,12 @@ export class BlogsController {
 
         const blog = await this.blogsSqlQueryRepository.getById(id)
 
-        if (!blog) {
+        if (!blog.result) {
             throw new HttpException('User not found', HttpStatus.NOT_FOUND);
 
         }
 
-        return blog
+        return blog.data
     }
 
     @Get("/:id/posts")
@@ -93,6 +95,7 @@ export class BlogsController {
     // Использование ValidationPipe
     @HttpCode(200)
     async getBlogByIdPosts(@Param("id") id: string, @Query(new DefaultValuesPipe()) qurePagination: QueryBlogsParamsDto, @Request() req) {
+
         let payload
         try {
 
@@ -102,18 +105,20 @@ export class BlogsController {
             console.log(error)
         }
 
-        const userId = payload ? payload.userId : null
+        const userId: string = payload ? payload.userId : null
 
         const blog = await this.blogsSqlQueryRepository.getById(id)
 
 
 
-        if (!blog) {
+        if (!blog.result) {
             throw new HttpException('User not found', HttpStatus.NOT_FOUND);
 
         }
 
-        return await this.blogsSqlQueryRepository.getBlogsPosts(qurePagination, id, userId)
+        const blogs = await this.blogsSqlQueryRepository.getBlogsPosts(qurePagination, id, userId)
+
+        return blogs.data
     }
 
     @Put("/:id")
@@ -123,7 +128,7 @@ export class BlogsController {
 
         const blog = await this.blogsSqlQueryRepository.getById(id)
 
-        if (!blog) {
+        if (!blog.result) {
             throw new HttpException('User not found', HttpStatus.NOT_FOUND);
 
         }
@@ -135,24 +140,21 @@ export class BlogsController {
     @UseGuards(AuthGuard)
     @HttpCode(204)
     async putBlogPost(@Param("blogId") blogId: string, @Param("postId") postId: string, @Body() postModel: PostsCreateModel2) {
-        debugger
 
         const blog = await this.blogsSqlQueryRepository.getById(blogId)
 
-        if (!blog) {
+        if (!blog.result) {
             throw new HttpException('blog not found', HttpStatus.NOT_FOUND);
         }
 
-        //@ts-ignore
-        postModel.blogId = blog.id
+        postModel.blogId = blog.data.id
 
 
         const post = await this.postsQuerySqlRepository.getById(postId)
-        if (!post) {
+        if (!post.result) {
             throw new HttpException('post not found', HttpStatus.NOT_FOUND);
         }
 
-        //@ts-ignore
         await this.postsService.updatePost(postId, postModel)
 
     }
@@ -164,7 +166,7 @@ export class BlogsController {
 
         const blog = await this.blogsSqlQueryRepository.getById(id)
 
-        if (!blog) {
+        if (!blog.result) {
             throw new HttpException('User not found', HttpStatus.NOT_FOUND);
 
         }
@@ -179,12 +181,12 @@ export class BlogsController {
 
         const blog = await this.blogsSqlQueryRepository.getById(blogId)
 
-        if (!blog) {
+        if (!blog.result) {
             throw new HttpException('blog not found', HttpStatus.NOT_FOUND);
         }
 
         const post = await this.postsQuerySqlRepository.getById(postId)
-        if (!post) {
+        if (!post.result) {
             throw new HttpException('post not found', HttpStatus.NOT_FOUND);
         }
 

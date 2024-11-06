@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
-import { blogT } from '../TYPE/type';
 import { BlogsEntityT } from '../domain/blog.entityT';
 import { BlogCreateModel } from '../models/input/create-blog.input.bodel';
+import { blogInputT } from '../type/type';
 
 
 @Injectable()
@@ -11,7 +11,7 @@ export class BlogSqlRepository {
     constructor(protected dataSource: DataSource, @InjectRepository(BlogsEntityT) protected blogs: Repository<BlogsEntityT>) { }
 
 
-    async creatInDbBlog(newUser: blogT) {
+    async creatInDbBlog(newUser: blogInputT): Promise<string> {
 
         const result = await this.blogs.insert({
             description: newUser.description,
@@ -44,9 +44,10 @@ export class BlogSqlRepository {
 
     }
 
-    async updateBlog(blogId: string, inputBlog: BlogCreateModel) {
+    async updateBlog(blogId: string, inputBlog: BlogCreateModel): Promise<void> {
         try {
-            const result = await this.blogs
+
+            await this.blogs
                 .createQueryBuilder()
                 .update(BlogsEntityT)
                 .set({ name: inputBlog.name, description: inputBlog.description, websiteUrl: inputBlog.websiteUrl }) // Устанавливаем isConfirmed в true
@@ -54,11 +55,9 @@ export class BlogSqlRepository {
                 .execute(); // Выполняем запрос
 
 
-            return result.affected > 0; // Возвращаем true, если обновление прошло успешно
 
         } catch (error) {
-            console.error('Error confirming email:', error);
-            return false; // Возвращаем false в случае ошибки
+            console.error(error);
         }
 
 
@@ -68,7 +67,7 @@ export class BlogSqlRepository {
 
     }
 
-    async deletBlog(blogId: string) {
+    async deletBlog(blogId: string): Promise<void> {
 
         try {
             await this.blogs.delete({ blogId: +blogId })

@@ -1,11 +1,11 @@
 import { Injectable } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
-import { Model } from "mongoose";
 import { SortDirection } from "mongodb";
+import { Model } from "mongoose";
+import { LikesPostInfo } from "../domain/likes-posts.entity";
 import { Posts } from "../domain/posts.entity";
 import { QueryPostsParamsDto } from "../models/input/query-posts.input";
-import { PostViewModelLiKeArray, PostViewModelLiKeArrayDB, PostViewModelT, PostViewModelTdb, statusCommentLike } from "../type/typePosts";
-import { LikesPostInfo } from "../domain/likes-posts.entity";
+import { PostViewModelLiKeArray, PostViewModelLiKeArrayDB, PostViewModelTdb, statusCommentLike } from "../type/typePosts";
 
 @Injectable()
 export class PostsQueryRepository {
@@ -27,7 +27,7 @@ export class PostsQueryRepository {
 
 
     async getPosts(query: QueryPostsParamsDto, userId?: string): Promise<any | { error: string }> {
-    
+
         const search = query.searchNameTerm ? { title: { $regex: query.searchNameTerm, $options: "i" } } : {};
         const filter = {
             ...search,

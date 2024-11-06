@@ -37,7 +37,7 @@ export type MeViewModel = {
   userId: string;
 };
 
-export type Paginator<T> = {
+export type PaginatorT<T> = {
   pagesCount: number;
   page: number;
   pageSize: number;
@@ -68,9 +68,10 @@ export type DeviceViewModel = {
 };
 
 
-export type ResultObject = {
-  success: boolean;
+export type ResultObject<T> = {
+  result: boolean;
   errorMessage?: string;
-  data?: any;
+  data?: T;
 }
+
 

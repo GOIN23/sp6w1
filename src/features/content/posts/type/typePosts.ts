@@ -82,3 +82,26 @@ export type PaginatorPosts = {
   totalCount: number;
   items: PostViewModelT[];
 };
+
+
+
+export type postInputT = {
+  blogId: string,
+  blogName: string,
+  content: string,
+  createdAt: string
+  shortDescription: string,
+  title: string
+  extendedLikesInfo: extendedLikesInfo
+}
+
+export type postOutputT = {
+  id: string
+  title: string
+  shortDescription: string
+  content: string
+  blogId: string
+  blogName: string
+  createdAt: string
+  extendedLikesInfo: extendedLikesInfo
+}

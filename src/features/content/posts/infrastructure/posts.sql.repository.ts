@@ -1,10 +1,11 @@
 import { Injectable } from '@nestjs/common';
 
 import { PostsCreateModel } from '../models/input/create-posts.input.bodel';
-import { PostViewModelLiKeArray } from '../type/typePosts';
+import { postInputT } from '../type/typePosts';
 
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
+import { ResultObject } from '../../../../utilit/TYPE/generalType';
 import { CommentsEntityT } from '../../comments/domain/comments.entityT';
 import { LikesInfoCommentsEntityT } from '../../comments/domain/likes.comments.entityT';
 import { CommentViewModelDb } from '../../comments/type/typeCommen';
@@ -23,7 +24,7 @@ export class PostSqlRepository {
     ) { }
 
 
-    async creatInDbPost(newPost: PostViewModelLiKeArray) {
+    async creatInDbPost(newPost: postInputT): Promise<ResultObject<string | null>> {
         try {
             const result = await this.posts.insert({
                 blogName: newPost.blogName,
@@ -35,18 +36,29 @@ export class PostSqlRepository {
             });
 
 
-            return result.identifiers[0].postId;
+            return {
+                result: true,
+                errorMessage: '',
+                data: result.identifiers[0].postId
+            };
 
         } catch (error) {
             console.log(error)
 
+
+            return {
+                result: false,
+                errorMessage: 'error when receiving post',
+                data: null
+            };
+
         }
     }
 
-    async updatePost(blogId: string, postsModel: PostsCreateModel) {
+    async updatePost(blogId: string, postsModel: PostsCreateModel): Promise<void> {
 
         try {
-            const result = await this.posts
+            await this.posts
                 .createQueryBuilder()
                 .update(PostsEntityT)
                 .set({
@@ -56,26 +68,20 @@ export class PostSqlRepository {
                 .execute(); // Выполняем запрос
 
 
-            return result.affected > 0; // Возвращаем true, если обновление прошло успешно
 
         } catch (error) {
             console.error('Error confirming email:', error);
-            return false; // Возвращаем false в случае ошибки
         }
 
 
     }
 
-    async deletePost(postId: string) {
+    async deletePost(postId: string): Promise<void> {
         try {
-            const result = await this.posts.delete({ postId: +postId })
-
-
-            return result.affected > 0; // Возвращаем true, если обновление прошло успешно
+            await this.posts.delete({ postId: +postId })
 
         } catch (error) {
             console.error('Error confirming email:', error);
-            return false; // Возвращаем false в случае ошибки
         }
 
 

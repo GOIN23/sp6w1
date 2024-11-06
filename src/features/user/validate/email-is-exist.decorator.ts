@@ -15,7 +15,7 @@ export class EmailIsExistContsraint implements ValidatorConstraintInterface {
 
     async validate(value: any, validationArguments: ValidationArguments) {
         const loginIsExists = await this.usersSqlRepository.findIsEmail(value)
-        if (!loginIsExists.success) {
+        if (!loginIsExists.result) {
             return true
         } else {
             return false
