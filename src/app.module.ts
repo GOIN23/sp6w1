@@ -5,6 +5,7 @@ import { ThrottlerModule } from '@nestjs/throttler';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from './features/auth/auth.module';
 import { ContentModule } from './features/content/content.moudle';
+import { QuestionModule } from './features/quiz/quiz.module';
 import { DeleteAllsController } from './features/testing-all-data/testing-all-data';
 import { UserModule } from './features/user/user.module';
 import configuration, { DbSettingsSettingsType, EnvironmentSettingsType, validate } from './settings/configuration';
@@ -66,6 +67,7 @@ import { LoggerMiddlewar2, LoggerMiddleware } from './utilit/middlewares/logger.
     UserModule,
 
     ContentModule,
+    QuestionModule,
   ],
   // providers: [{
   //   provide: APP_GUARD,
