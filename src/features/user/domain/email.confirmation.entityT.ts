@@ -1,5 +1,5 @@
 import { Column, Entity, JoinColumn, OneToOne, PrimaryGeneratedColumn } from 'typeorm';
-import { UserEnity } from './entity.user';
+import { UserEnity } from './entity.user.entityT';
 
 
 

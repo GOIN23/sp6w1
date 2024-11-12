@@ -22,7 +22,7 @@ import { LoggerMiddlewar2, LoggerMiddleware } from './utilit/middlewares/logger.
       password: '1234',
       database: 'typeORMtestNest',
       autoLoadEntities: true,
-      synchronize: true,
+      synchronize: false,
       logging: true
     }),
 

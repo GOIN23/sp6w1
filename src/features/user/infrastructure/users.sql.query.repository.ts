@@ -3,7 +3,7 @@ import { InjectRepository } from "@nestjs/typeorm";
 import { DataSource, Repository } from "typeorm";
 import { PaginatorUsers, UserViewModel2 } from "../../../utilit/TYPE/typeUser";
 import { QueryParamsDto } from "../../../utilit/dto/dto.query.user";
-import { UserEnity } from "../domain/entity.user";
+import { UserEnity } from "../domain/entity.user.entityT";
 import { UserOutputModel } from '../models/output/user.output.model';
 @Injectable()
 export class UsersSqlQueryRepository {

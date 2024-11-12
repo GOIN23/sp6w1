@@ -3,8 +3,8 @@ import { InjectRepository } from "@nestjs/typeorm";
 import { DataSource, Repository } from "typeorm";
 import { ResultObject } from "../../../utilit/TYPE/generalType";
 import { User } from "../domain/createdBy-user-Admin.entity";
-import { EmailConfirmation } from "../domain/entity.email.confirmation";
-import { UserEnity } from "../domain/entity.user";
+import { EmailConfirmation } from "../domain/email.confirmation.entityT";
+import { UserEnity } from "../domain/entity.user.entityT";
 
 
 @Injectable()

@@ -19,7 +19,10 @@
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "set ENV=TEST && jest --config ./jest-e2e.json --runInBand",
     "test:integration": "set ENV=TEST && jest --config ./jest-integration.json --runInBand",
-    "test:unit": "set ENV=TEST && jest --config ./jest-unit.json --runInBand"
+    "test:unit": "set ENV=TEST && jest --config ./jest-unit.json --runInBand",
+    "migration:generate": "typeorm-ts-node-commonjs migration:generate -d typeorm.config.ts",
+    "migration:run": "typeorm-ts-node-commonjs migration:run -d typeorm.config.ts",
+    "migration:revert": "typeorm-ts-node-commonjs migration:revert -d typeorm.config.ts"
   },
   "dependencies": {
     "@nestjs/common": "^10.0.0",

@@ -1,9 +1,9 @@
 import { Column, Entity, JoinColumn, OneToMany, OneToOne, PrimaryGeneratedColumn } from 'typeorm';
-import { SesionEntity } from '../../auth/domain/sesion.auth.entity';
+import { SesionEntity } from '../../auth/domain/sesion.auth.entityT';
 import { CommentsEntityT } from '../../content/comments/domain/comments.entityT';
 import { LikesInfoCommentsEntityT } from '../../content/comments/domain/likes.comments.entityT';
 import { LikesInfoPostsEntityT } from '../../content/posts/domain/likes.posts.entityT';
-import { EmailConfirmation } from './entity.email.confirmation';
+import { EmailConfirmation } from './email.confirmation.entityT';
 
 
 

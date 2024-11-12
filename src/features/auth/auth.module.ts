@@ -12,9 +12,9 @@ import { UsersAuthService } from './application/auth-service';
 import { EmailAdapter } from './application/emai-Adapter';
 import { SesionsService } from './application/sesions-service';
 import { RecoveryPassword, RecoveryPasswordSchema } from './domain/recovery-password-code';
-import { RecoveryPassword as recoveryPasswordEntity } from './domain/recovery.password.code.entity';
+import { RecoveryPassword as recoveryPasswordEntity } from './domain/recovery.password.code.entityT';
 import { DeviceSesions, DeviceSesionsSchema } from './domain/sesion-auth.entity';
-import { SesionEntity } from './domain/sesion.auth.entity';
+import { SesionEntity } from './domain/sesion.auth.entityT';
 import { UsersAuthSqlRepository } from './infrastructure/auth.sql.repository';
 import { UsersCreatedRepository } from './infrastructure/users.repository';
 

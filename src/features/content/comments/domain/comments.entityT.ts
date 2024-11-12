@@ -1,5 +1,5 @@
 import { Column, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
-import { UserEnity } from '../../../user/domain/entity.user';
+import { UserEnity } from '../../../user/domain/entity.user.entityT';
 import { PostsEntityT } from '../../posts/domain/posts.entityT';
 import { LikesInfoCommentsEntityT } from './likes.comments.entityT';
 

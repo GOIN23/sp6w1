@@ -3,8 +3,8 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
 import { UsersSqlRepository } from '../../user/infrastructure/users.sql.repository';
-import { RecoveryPassword } from '../domain/recovery.password.code.entity';
-import { SesionEntity } from '../domain/sesion.auth.entity';
+import { RecoveryPassword } from '../domain/recovery.password.code.entityT';
+import { SesionEntity } from '../domain/sesion.auth.entityT';
 
 
 @Injectable()
