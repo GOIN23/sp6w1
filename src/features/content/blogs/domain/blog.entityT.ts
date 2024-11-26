@@ -13,9 +13,6 @@ export class BlogsEntityT {
     name: string;
 
     @Column()
-    informatin: string
-
-    @Column()
     description: string;
 
     @Column()

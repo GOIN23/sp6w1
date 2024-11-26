@@ -8,24 +8,45 @@ import { ContentModule } from './features/content/content.moudle';
 import { QuestionModule } from './features/quiz/quiz.module';
 import { DeleteAllsController } from './features/testing-all-data/testing-all-data';
 import { UserModule } from './features/user/user.module';
-import configuration, { DbSettingsSettingsType, EnvironmentSettingsType, validate } from './settings/configuration';
+import configuration, { DbSettingsSettingsType, EnvironmentSettingsType } from './settings/configuration';
 import { CoreModule } from './utilit/core.modu';
 import { LoggerMiddlewar2, LoggerMiddleware } from './utilit/middlewares/logger.middleware';
 
 
 @Module({
   imports: [
-    TypeOrmModule.forRoot({
-      type: 'postgres',
-      host: 'localhost',
-      port: 5432,
-      username: 'postgres',
-      password: '1234',
-      database: 'typeORMtestNest',
-      autoLoadEntities: true,
-      synchronize: false,
-      logging: true
+    TypeOrmModule.forRootAsync({
+      useFactory: async (configService: ConfigService) => {
+
+        const environmentSettings = configService.get<EnvironmentSettingsType>('environmentSettings', {
+          infer: true,
+        });
+
+        const databaseSettings = configService.get<DbSettingsSettingsType>('dbSettings', {
+          infer: true,
+        });
+
+        const databaseName = environmentSettings.isTesting
+          ? databaseSettings.DATA_BASE_NAME_TEST
+          : databaseSettings.DATA_BASE_NAME;
+
+
+
+        return {
+          type: 'postgres',
+          host: 'localhost',
+          port: 5432,
+          username: 'postgres',
+          password: '1234',
+          database: databaseName,
+          autoLoadEntities: true,
+          synchronize: environmentSettings.isTesting ? true : false,
+          logging: true,
+        }
+      },
+      inject: [ConfigService],
     }),
+
 
     MongooseModule.forRootAsync({
       useFactory: async (configService: ConfigService) => {
@@ -53,7 +74,6 @@ import { LoggerMiddlewar2, LoggerMiddleware } from './utilit/middlewares/logger.
     ConfigModule.forRoot({
       isGlobal: true,
       load: [configuration],
-      validate: validate,
     }),
     CoreModule,
 

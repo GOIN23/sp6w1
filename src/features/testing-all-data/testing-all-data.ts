@@ -24,14 +24,9 @@ export class DeleteAllsController {
         TRUNCATE TABLE "comments" RESTART IDENTITY CASCADE;
         TRUNCATE TABLE "likesCommentsInfo" RESTART IDENTITY CASCADE;
         TRUNCATE TABLE "likesPostsInfo" RESTART IDENTITY CASCADE;
-
-
-
-
+        TRUNCATE TABLE "questions" RESTART IDENTITY CASCADE;
   `
-
         await this.dataSource.query(queryuDeleteMany)
-
 
 
     }

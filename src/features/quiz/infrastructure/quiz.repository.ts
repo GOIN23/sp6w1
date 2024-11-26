@@ -4,7 +4,6 @@ import { Repository } from "typeorm";
 import { QuestionsEntity } from "../domain/questions.entityT";
 import { inputQuestionsCreateT, inputQuestionsUpdateT } from "../type/quizType";
 
-QuestionsEntity
 @Injectable()
 export class Quizrepository {
     constructor(
@@ -30,7 +29,7 @@ export class Quizrepository {
             })
 
 
-            return result.identifiers[0].id;
+            return result.identifiers[0].questionsId;
 
         } catch (error) {
             console.log(error)

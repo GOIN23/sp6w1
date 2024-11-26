@@ -20,7 +20,6 @@ import { skipSettings } from "../utils/skip-settings";
 
 
 
-
 aDescribe(skipSettings.for('authTest'))("user test", () => {
     let app: INestApplication;
     let authTestManger: AuthTestMannager;

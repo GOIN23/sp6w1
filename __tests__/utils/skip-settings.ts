@@ -4,8 +4,11 @@
 
 export const skipSettings = {
   run_all_tests: false,
-
   appTests: false,
+  userTest: false,
+  authTest: true,
+  postsTest: false,
+  questionsTest: false,
 
   for(testName: TestsNames): boolean {
     // If we need run all tests without skip
@@ -22,4 +25,4 @@ export const skipSettings = {
   },
 };
 
-export type TestsNames = 'userTest' | 'authTest' | 'postsTest';
+export type TestsNames = 'userTest' | 'authTest' | 'postsTest' | 'questionsTest';

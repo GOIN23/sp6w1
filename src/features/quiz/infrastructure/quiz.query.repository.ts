@@ -38,7 +38,7 @@ export class QuizQueryrepository {
             data: {
                 id: result.questionsId.toString(),
                 body: result.body,
-                correctAnswers: result.correctAnswers,
+                correctAnswers: [...result.correctAnswers],
                 createdAt: result.createdAt,
                 published: result.published,
                 updatedAt: result.updatedAt
@@ -73,9 +73,9 @@ export class QuizQueryrepository {
             // Выполняем запрос через queryBuilder
             const [items, totalCount] = await this.question
                 .createQueryBuilder('q') // Псевдоним для таблицы 'bs'
-                .where(bodySearchTerm ? 'LOWER(b.name) LIKE :bodySearchTerm' : '1=1', { bodySearchTerm })
+                .where(bodySearchTerm ? 'LOWER(q.name) LIKE :bodySearchTerm' : '1=1', { bodySearchTerm })
                 .andWhere(publishedStatus)
-                .orderBy(`b.${query.sortBy} COLLATE "C"`, sortDirection) // Устанавливаем сортировку
+                .orderBy(`q.${query.sortBy} COLLATE "C"`, sortDirection) // Устанавливаем сортировку
                 .skip((query.pageNumber - 1) * query.pageSize) // Пропускаем записи для пагинации
                 .take(query.pageSize) // Ограничиваем размер страницы
                 .getManyAndCount(); // Получаем данные и общее количество записей
@@ -107,6 +107,7 @@ export class QuizQueryrepository {
 
 
         } catch (error) {
+            console.log(error)
             return {
                 result: false,
                 errorMessage: `error when receiving blog: ${error}`,

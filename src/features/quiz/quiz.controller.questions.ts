@@ -1,6 +1,6 @@
 import { Body, Controller, Delete, Get, HttpCode, HttpException, HttpStatus, Param, Post, Put, Query, UseGuards } from "@nestjs/common";
 import { CommandBus } from "@nestjs/cqrs";
-import { AuthGuard } from "@nestjs/passport";
+import { AuthGuard } from "../../utilit/guards/basic-auth-guards";
 import { CreateQuestionCommand } from "./application/use-case/create.question.case";
 import { DeleteQuestionCommand } from "./application/use-case/delete.question.case";
 import { UpdateQuestionCommand } from "./application/use-case/update.question.case";
@@ -40,7 +40,7 @@ export class QuizQuestionsController {
     async createQuestion(@Body() questionInput: InputQuestionCreate) {
         const questionId: string = await this.commandBuse.execute(new CreateQuestionCommand(questionInput.body, questionInput.correctAnswers))
 
-        return this.quizQueryRepository.getQuestionById(questionId)
+        return (await this.quizQueryRepository.getQuestionById(questionId)).data
     }
 
     @Delete("/:id")

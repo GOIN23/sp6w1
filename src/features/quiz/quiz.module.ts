@@ -14,7 +14,7 @@ import { QuizQuestionsController } from './quiz.controller.questions';
 
 
 const questionsProviders: Provider[] = [QuizService, QuizQueryrepository, Quizrepository]
-const questionsCase = [createPairCase, createQuestionCase, deleteQuestionCase, updateeQuestionCase, updateeQuestionPublishCase]
+export const questionsCase: Provider[] = [createPairCase, createQuestionCase, deleteQuestionCase, updateeQuestionCase, updateeQuestionPublishCase]
 
 
 
