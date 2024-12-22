@@ -48,21 +48,24 @@ export class AuthTestMannager {
         return datainformation
     }
 
-
-
-
     async findUser(loginOrEmail: string) {
+
+
+
+
 
         const queryuUserTable = `
         SELECT *
         FROM users
-        LEFT JOIN email_confirmation ON fk_users_id = user_id
+        LEFT JOIN "emailConfirmation" ON fk_users_id = "userId"
         WHERE login = $1 OR email = $1
   `
 
         try {
             const user = await this.dataSource.query(queryuUserTable, [loginOrEmail])
 
+
+            console.log(user, "useruseruseruser")
 
             if (!user) {
                 return null

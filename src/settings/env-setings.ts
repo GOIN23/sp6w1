@@ -21,7 +21,7 @@ export class EnvironmentSettings {
         return this.ENV === Environments.STAGING;
     }
     get isTesting() {
-        debugger
+
         console.log('statrarasras', `${this.ENV}${Environments.TEST}`, this.ENV === Environments.TEST)
 
         return this.ENV === Environments.TEST;

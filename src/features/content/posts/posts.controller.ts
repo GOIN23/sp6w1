@@ -29,7 +29,6 @@ export class PostsController {
     @UseGuards(JwtAuthGuardPassport)// Это единсвтенное место где я использую passportJwt
     @HttpCode(201)
     async creatComments(@Body() commentPosts: CommentPosts, @Param("postId") id: string, @Request() req) {
-        debugger
         const post = await this.postsQuerySqlRepository.getById(id);
 
 

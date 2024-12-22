@@ -15,7 +15,6 @@ export class JwtAccessStrategy extends PassportStrategy(Strategy) {
     }
 
     async validate(payload: any) {
-        debugger
         const user = await this.usersAuthService.findUsers(payload.userId); // Предположим, у вас есть метод findById
         if (!user) {
             throw new UnauthorizedException();

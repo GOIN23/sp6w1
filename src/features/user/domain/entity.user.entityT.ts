@@ -3,6 +3,7 @@ import { SesionEntity } from '../../auth/domain/sesion.auth.entityT';
 import { CommentsEntityT } from '../../content/comments/domain/comments.entityT';
 import { LikesInfoCommentsEntityT } from '../../content/comments/domain/likes.comments.entityT';
 import { LikesInfoPostsEntityT } from '../../content/posts/domain/likes.posts.entityT';
+import { PlayersEntity } from '../../quiz/domain/player.entityT';
 import { EmailConfirmation } from './email.confirmation.entityT';
 
 
@@ -47,6 +48,8 @@ export class UserEnity {
     @OneToMany(() => LikesInfoPostsEntityT, (likesInfoPostsEntityT) => likesInfoPostsEntityT.users)
     likesInfoPostsEntityT: LikesInfoPostsEntityT
 
+    @OneToMany(() => PlayersEntity, (playersEntity) => playersEntity.users)
+    player: PlayersEntity
 
 
 

@@ -1,4 +1,6 @@
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import { AnswersEntity } from './answers.entityT';
+import { GamesQuestionEntity } from './game.questions.entityT';
 
 
 
@@ -22,6 +24,15 @@ export class QuestionsEntity {
 
     @Column({ nullable: true })
     updatedAt: string | null
+
+    @OneToMany(() => GamesQuestionEntity, (gamesQuestionEntity) => gamesQuestionEntity.question)
+    gamesQuestionEntity: GamesQuestionEntity
+
+    @OneToMany(() => AnswersEntity, (answersEntity) => answersEntity.question)
+    answers: AnswersEntity[]
+
+
+
 
 
 }

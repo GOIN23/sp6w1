@@ -165,7 +165,6 @@ export class UsersAuthService {
         return res;
     }
     async checkRefreshToken(refreshToken: string) {
-        debugger
 
         try {
             const result: any = await this.jwtService.verify(refreshToken);

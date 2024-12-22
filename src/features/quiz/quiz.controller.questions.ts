@@ -18,7 +18,7 @@ import { DefaultValuesPipeQuiz } from "./util/pipe/pipe.quiz.query";
 
 
 
-@Controller('quiz/questions')
+@Controller('sa/quiz/questions')
 export class QuizQuestionsController {
     constructor(private commandBuse: CommandBus, private quizQueryRepository: QuizQueryrepository) { }
 

@@ -33,7 +33,6 @@ export class PostsQueryRepository {
             ...search,
         };
         try {
-            debugger
             const items: PostViewModelLiKeArrayDB[] = await this.postModel
                 .find({})
                 .sort({ [query.sortBy]: query.sortDirection as SortDirection })

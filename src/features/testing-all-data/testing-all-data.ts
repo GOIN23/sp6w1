@@ -25,6 +25,12 @@ export class DeleteAllsController {
         TRUNCATE TABLE "likesCommentsInfo" RESTART IDENTITY CASCADE;
         TRUNCATE TABLE "likesPostsInfo" RESTART IDENTITY CASCADE;
         TRUNCATE TABLE "questions" RESTART IDENTITY CASCADE;
+        TRUNCATE TABLE "player" RESTART IDENTITY CASCADE;
+        TRUNCATE TABLE "game" RESTART IDENTITY CASCADE;
+        TRUNCATE TABLE "gameQuestion" RESTART IDENTITY CASCADE;
+        TRUNCATE TABLE "answer" RESTART IDENTITY CASCADE;
+
+
   `
         await this.dataSource.query(queryuDeleteMany)
 

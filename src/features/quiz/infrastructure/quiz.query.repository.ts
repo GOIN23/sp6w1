@@ -2,6 +2,8 @@ import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 import { PaginatorT, ResultObject } from "../../../utilit/TYPE/generalType";
+import { AnswersEntity } from "../domain/answers.entityT";
+import { GamesEntity } from "../domain/game.entityT";
 import { QuestionsEntity } from "../domain/questions.entityT";
 import { QueryQuizParamsDto } from "../model/input/input.question.query";
 import { OutputQuestionsGetById } from "../model/output/output.question.getById";
@@ -10,12 +12,316 @@ import { OutputQuestionsGetById } from "../model/output/output.question.getById"
 export class QuizQueryrepository {
     constructor(
         @InjectRepository(QuestionsEntity) protected question: Repository<QuestionsEntity>,
-
-
-
+        @InjectRepository(GamesEntity) protected game: Repository<GamesEntity>,
+        @InjectRepository(AnswersEntity) protected answers: Repository<AnswersEntity>,
     ) { }
 
 
+
+    async getPairById(gameId: string, userId?: string) {
+
+        try {
+            debugger
+            if (userId) {
+                const items = await this.game
+                    .createQueryBuilder('g') // Псевдоним для таблицы 'bs'
+                    .where('g.gameId = :id', { id: gameId }) // Фильтруем по userId
+                    .leftJoinAndSelect('g.questions', 'q')
+                    .leftJoinAndSelect('q.question', 'qE')
+                    .leftJoinAndSelect('g.playerOneId', 'pO')
+                    .leftJoinAndSelect('g.playerTwoId', 'pT')
+                    .leftJoinAndSelect('pO.answers', 'pOa')
+                    .leftJoinAndSelect('pO.users', 'pOu')
+                    .leftJoinAndSelect('pT.answers', 'pTa')
+                    .leftJoinAndSelect('pT.users', 'pTu')
+                    .andWhere('(pO.userFkId = :userId OR pT.userFkId = :userId)', { userId }) // Условие поиска по userId в playerOne или playerTwo
+
+                    .getMany()
+
+                return {
+                    result: true,
+                    errorMessage: '',
+                    data: {
+                        id: items[0].gameId,
+                        firstPlayerProgress: {
+                            answers: [...items[0].playerOneId.answers.map((el) => {
+                                return {
+                                    questionId: el.question.questionsId,
+                                    answerStatus: el.status,
+                                    addedAt: el.createdAt
+                                }
+                            })],
+                            player: {
+                                id: items[0].playerOneId.playerId.toString(),
+                                login: items[0].playerOneId.users.login
+                            },
+                            score: items[0].playerOneId.score
+                        },
+                        secondPlayerProgress: items[0].playerTwoId === null ? null : {
+                            answers: [...items[0].playerTwoId.answers.map((el) => {
+                                return {
+                                    questionId: el.question.questionsId,
+                                    answerStatus: el.status,
+                                    addedAt: el.createdAt
+                                }
+                            })],
+                            player: {
+                                id: items[0].playerTwoId.playerId.toString(),
+                                login: items[0].playerTwoId.users.login
+                            },
+                            score: items[0].playerTwoId.score
+                        },
+                        questions: [
+                            ...items[0].questions.map((el) => {
+                                return {
+                                    id: el.question.questionsId,
+                                    body: el.question.body
+                                }
+
+                            })
+                        ],
+                        status: items[0].status,
+                        pairCreatedDate: items[0].pairCreatedDate,
+                        startGameDate: items[0].startGameDate,
+                        finishGameDate: items[0].finishGameDate
+
+                    }
+                }
+            }
+
+            const items = await this.game
+                .createQueryBuilder('g') // Псевдоним для таблицы 'bs'
+                .where('g.gameId = :id', { id: gameId }) // Фильтруем по userId
+                .leftJoinAndSelect('g.questions', 'q')
+                .leftJoinAndSelect('q.question', 'qE')
+                .leftJoinAndSelect('g.playerOneId', 'pO')
+                .leftJoinAndSelect('g.playerTwoId', 'pT')
+                .leftJoinAndSelect('pO.answers', 'pOa')
+                .leftJoinAndSelect('pT.answers', 'pTa')
+                .leftJoinAndSelect('pTa.question', 'qPta')
+                .leftJoinAndSelect('pOa.question', 'qPoa')
+                .leftJoinAndSelect('pO.users', 'pOu')
+                .leftJoinAndSelect('pT.users', 'pTu')
+                .getMany()
+
+
+
+
+
+            return {
+                result: true,
+                errorMessage: '',
+                data: {
+                    id: items[0].gameId,
+                    firstPlayerProgress: {
+                        answers: [...items[0].playerOneId.answers.map((el) => {
+                            return {
+                                questionId: el.question.questionsId,
+                                answerStatus: el.status,
+                                addedAt: el.createdAt
+                            }
+                        })],
+                        player: {
+                            id: items[0].playerOneId.playerId.toString(),
+                            login: items[0].playerOneId.users.login
+                        },
+                        score: items[0].playerOneId.score
+                    },
+                    secondPlayerProgress: items[0].playerTwoId === null ? null : {
+                        answers: [...items[0].playerTwoId.answers.map((el) => {
+                            return {
+                                questionId: el.question.questionsId,
+                                answerStatus: el.status,
+                                addedAt: el.createdAt
+                            }
+                        })],
+                        player: {
+                            id: items[0].playerTwoId.playerId.toString(),
+                            login: items[0].playerTwoId.users.login
+                        },
+                        score: items[0].playerTwoId.score
+                    },
+                    questions: [
+                        ...items[0].questions.map((el) => {
+                            return {
+                                id: el.question.questionsId,
+                                body: el.question.body
+                            }
+
+                        })
+                    ],
+                    status: items[0].status,
+                    pairCreatedDate: items[0].pairCreatedDate,
+                    startGameDate: items[0].startGameDate,
+                    finishGameDate: items[0].finishGameDate
+
+                }
+            }
+
+
+
+        } catch (error) {
+            console.log(error, "fsdfsdfs")
+
+            return {
+                result: false,
+                errorMessage: 'error when receiving blog',
+                data: null
+            }
+
+        }
+
+
+
+    }
+
+    async getPairFreexisting() {
+        const items = await this.game
+            .createQueryBuilder('g') // Псевдоним для таблицы 'bs'
+            .leftJoinAndSelect('g.questions', 'q')
+            .leftJoinAndSelect('q.question', 'qE')
+            .leftJoinAndSelect('g.playerOneId', 'pO')
+            .leftJoinAndSelect('g.playerTwoId', 'pT')
+            .leftJoinAndSelect('pT.users', 'ut')
+            .leftJoinAndSelect('pO.users', 'uO')
+
+
+            .getMany()
+
+        const result = items.filter((el) => el.playerTwoId === null)
+        const randomIndex = Math.floor(Math.random() * result.length);
+
+        if (result.length > 0) {
+            return {
+                result: true,
+                data: result[randomIndex],
+                errorMessage: 'there is a free pair'
+            }
+        }
+
+        return {
+            result: false,
+            data: null,
+            errorMessage: 'no free pair'
+        }
+
+
+    }
+
+    async getPairMycurrent(playerId: string) {
+        try {
+            debugger
+            const items = await this.game
+                .createQueryBuilder('g') // Псевдоним для таблицы 'bs'
+                .where("g.status = 'Active' OR g.status = 'PendingSecondPlayer'")
+                .leftJoinAndSelect('g.questions', 'q')
+                .leftJoinAndSelect('q.question', 'qE')
+                .leftJoinAndSelect('g.playerOneId', 'pO')
+                .leftJoinAndSelect('g.playerTwoId', 'pT')
+                .leftJoinAndSelect('pO.answers', 'pOa')
+                .leftJoinAndSelect('pOa.question', 'qPo')
+                .leftJoinAndSelect('pO.users', 'pOu')
+                .leftJoinAndSelect('pT.answers', 'pTa')
+                .leftJoinAndSelect('pTa.question', 'qTa')
+                .leftJoinAndSelect('pT.users', 'pTu')
+                .andWhere('pO.users = :id', { id: playerId }) // Фильтруем по userId
+                .getOne()
+
+
+
+
+
+
+            if (items) {
+                return {
+                    result: true,
+                    errorMessage: '',
+                    data: {
+                        id: items.gameId,
+                        firstPlayerProgress: {
+                            answers: [...items.playerOneId.answers.map((el) => {
+                                return {
+                                    questionId: el.question.questionsId,
+                                    answerStatus: el.status,
+                                    addedAt: el.createdAt
+                                }
+                            })],
+                            player: {
+                                id: items.playerOneId.playerId.toString(),
+                                login: items.playerOneId.users.login
+                            },
+                            score: items.playerOneId.score
+                        },
+                        secondPlayerProgress: items.playerTwoId === null ? null : {
+                            answers: [...items.playerTwoId.answers.map((el) => {
+                                return {
+                                    questionId: el.question.questionsId,
+                                    answerStatus: el.status,
+                                    addedAt: el.createdAt
+                                }
+                            })],
+                            player: {
+                                id: items.playerTwoId.playerId.toString(),
+                                login: items.playerTwoId.users.login
+                            },
+                            score: items.playerTwoId.score
+                        },
+                        questions: [
+                            ...items.questions.map((el) => {
+                                return {
+                                    id: el.question.questionsId,
+                                    body: el.question.body
+                                }
+
+                            })
+                        ],
+                        status: items.status,
+                        pairCreatedDate: items.pairCreatedDate,
+                        startGameDate: items.startGameDate,
+                        finishGameDate: items.finishGameDate
+
+                    }
+
+                }
+
+            }
+
+            return {
+                result: false,
+                errorMessage: 'error get game',
+                data: null
+            }
+        } catch (error) {
+            console.log(error)
+
+            return {
+                result: false,
+                errorMessage: 'error get game',
+                data: null
+            }
+
+
+        }
+
+
+
+    }
+
+    async checkingAnswerPlayerUser(userId: number, gameId: number) {
+        const items = await this.game
+            .createQueryBuilder('g') // Псевдоним для таблицы 'bs'
+            .where('g.gameId = :id', { id: gameId }) // Фильтруем по userId
+            .leftJoinAndSelect('g.playerOneId', 'pO')
+            .leftJoinAndSelect('g.playerTwoId', 'pT')
+            .leftJoinAndSelect('pO.users', 'pOu')
+            .leftJoinAndSelect('pT.users', 'pTu')
+            .getOne()
+
+
+        const result = +items.playerOneId.users.userId === +userId ? 'playerOne' : 'playerTwo'
+
+        return result
+    }
 
     async getQuestionById(id: string): Promise<ResultObject<OutputQuestionsGetById | null>> {
 
@@ -49,7 +355,6 @@ export class QuizQueryrepository {
 
 
     }
-
 
     async getQuestions(query: QueryQuizParamsDto): Promise<ResultObject<PaginatorT<OutputQuestionsGetById> | null>> {
 

@@ -12,7 +12,6 @@ export class UsersSqlQueryRepository {
     }
 
     async getById(userId: string): Promise<UserOutputModel> {
-        debugger
 
 
         try {
@@ -44,7 +43,6 @@ export class UsersSqlQueryRepository {
     }
 
     async getUsers(query: QueryParamsDto): Promise<PaginatorUsers> {
-        debugger
         try {
             const sortDirection = query.sortDirection === 'desc' ? 'DESC' : 'ASC';
 

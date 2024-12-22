@@ -1,7 +1,6 @@
 import { MiddlewareConsumer, Module, NestModule, RequestMethod } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
-import { ThrottlerModule } from '@nestjs/throttler';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from './features/auth/auth.module';
 import { ContentModule } from './features/content/content.moudle';
@@ -32,6 +31,8 @@ import { LoggerMiddlewar2, LoggerMiddleware } from './utilit/middlewares/logger.
 
 
 
+        console.log(databaseName, "databaseNamedatabaseNamedatabaseName")
+
         return {
           type: 'postgres',
           host: 'localhost',
@@ -40,7 +41,8 @@ import { LoggerMiddlewar2, LoggerMiddleware } from './utilit/middlewares/logger.
           password: '1234',
           database: databaseName,
           autoLoadEntities: true,
-          synchronize: environmentSettings.isTesting ? true : false,
+          synchronize: true,
+          //environmentSettings.isTesting ? true : false,
           logging: true,
         }
       },
@@ -77,10 +79,10 @@ import { LoggerMiddlewar2, LoggerMiddleware } from './utilit/middlewares/logger.
     }),
     CoreModule,
 
-    ThrottlerModule.forRoot([{
-      ttl: 10000,
-      limit: 5,
-    }]),
+    // ThrottlerModule.forRoot([{
+    //   ttl: 10000,
+    //   limit: 5,
+    // }]),
 
     AuthModule,
 

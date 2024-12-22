@@ -15,6 +15,14 @@ export enum publishedStatus {
 }
 
 
+export enum playerstatus {
+    win = 'win',
+    lose = 'lose',
+    draft = 'draft'
+}
+
+
+
 export type inputQuestionsCreateT = {
     body: string,
     correctAnswers: string[],

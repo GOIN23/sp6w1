@@ -105,7 +105,6 @@ export class AllExceptionsFilter implements ExceptionFilter {
 export class HttpErrorFilter implements ExceptionFilter {
 
   catch(exception: any, host: ArgumentsHost) {
-    debugger
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
     const request = ctx.getRequest<Request>();
