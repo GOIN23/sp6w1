@@ -41,6 +41,7 @@ export class Quizrepository {
             });
 
             const questions = await this.dataSource.getRepository(QuestionsEntity).find({
+                where: { published: true },
                 take: 5
             });
 
@@ -133,7 +134,6 @@ export class Quizrepository {
 
 
         await this.dataSource.transaction(async (manager) => {
-            debugger
 
 
 

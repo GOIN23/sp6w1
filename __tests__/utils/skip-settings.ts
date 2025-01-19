@@ -8,8 +8,8 @@ export const skipSettings = {
   userTest: true,
   authTest: true,
   postsTest: true,
-  questionsTest: false,
-  connectionTest: false,
+  questionsTest: true,
+  connectionTest: true,
   quizTest: false,
 
   for(testName: TestsNames): boolean {

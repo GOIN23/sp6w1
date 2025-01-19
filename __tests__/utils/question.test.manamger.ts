@@ -40,18 +40,37 @@ export class QuestionMamager {
     async createQuestions(count: number) {
 
         for (let i = 0; i < count; i++) {
-            const obj: inputQuestionsCreateT = {
+            const obj: any = {
                 body: `${this.alphabetLower[i]}SFSgfgfgfgfgfFS`,
                 correctAnswers: [`DS${this.alphabetLower[i]}F`, `${this.alphabetLower[i]}FSDFSD`],
-                createdAt: "FSFSD",
-                published: false
             }
 
             await request(this.app.getHttpServer())
-                .post(`/api/quiz/questions`)
+                .post(`/api/sa/quiz/questions`)
                 .set({ Authorization: "Basic " + codedAuth })
                 .send(obj)
+
         }
+
+
+        for (let i = 1; i <= count; i++) {
+
+            await request(this.app.getHttpServer())
+                .put(`/api/sa/quiz/questions/${i}/publish`)
+                .set({ Authorization: "Basic " + codedAuth })
+                .send({
+                    published: true
+                })
+
+        }
+
+
+        const res = await request(this.app.getHttpServer())
+            .get(`/api/sa/quiz/questions`)
+            .set({ Authorization: "Basic " + codedAuth })
+
+
+        return res.body
 
     }
 }

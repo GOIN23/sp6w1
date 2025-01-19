@@ -70,7 +70,7 @@ aDescribe(skipSettings.for('connectionTest'))('test create Question', () => {
 
 
 
-    describe("test questions ", () => {
+    describe("test connection ", () => {
 
         it('+ creating a pair when there is no free pair', async () => {
             const userData = {

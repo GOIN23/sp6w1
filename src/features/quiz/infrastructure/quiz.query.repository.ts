@@ -1,9 +1,10 @@
 import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
+import { DataSource, Repository } from "typeorm";
 import { PaginatorT, ResultObject } from "../../../utilit/TYPE/generalType";
 import { AnswersEntity } from "../domain/answers.entityT";
 import { GamesEntity } from "../domain/game.entityT";
+import { GamesQuestionEntity } from "../domain/game.questions.entityT";
 import { QuestionsEntity } from "../domain/questions.entityT";
 import { QueryQuizParamsDto } from "../model/input/input.question.query";
 import { OutputQuestionsGetById } from "../model/output/output.question.getById";
@@ -13,7 +14,9 @@ export class QuizQueryrepository {
     constructor(
         @InjectRepository(QuestionsEntity) protected question: Repository<QuestionsEntity>,
         @InjectRepository(GamesEntity) protected game: Repository<GamesEntity>,
+        @InjectRepository(GamesQuestionEntity) protected gamesQuestion: Repository<GamesQuestionEntity>,
         @InjectRepository(AnswersEntity) protected answers: Repository<AnswersEntity>,
+        protected dataSource: DataSource
     ) { }
 
 
@@ -42,11 +45,11 @@ export class QuizQueryrepository {
                     result: true,
                     errorMessage: '',
                     data: {
-                        id: items[0].gameId,
+                        id: items[0].gameId.toString(),
                         firstPlayerProgress: {
                             answers: [...items[0].playerOneId.answers.map((el) => {
                                 return {
-                                    questionId: el.question.questionsId,
+                                    questionId: el.question.questionsId.toString(),
                                     answerStatus: el.status,
                                     addedAt: el.createdAt
                                 }
@@ -60,7 +63,7 @@ export class QuizQueryrepository {
                         secondPlayerProgress: items[0].playerTwoId === null ? null : {
                             answers: [...items[0].playerTwoId.answers.map((el) => {
                                 return {
-                                    questionId: el.question.questionsId,
+                                    questionId: el.question.questionsId.toString(),
                                     answerStatus: el.status,
                                     addedAt: el.createdAt
                                 }
@@ -74,7 +77,7 @@ export class QuizQueryrepository {
                         questions: [
                             ...items[0].questions.map((el) => {
                                 return {
-                                    id: el.question.questionsId,
+                                    id: el.question.questionsId.toString(),
                                     body: el.question.body
                                 }
 
@@ -108,15 +111,18 @@ export class QuizQueryrepository {
 
 
 
+
+
+
             return {
                 result: true,
                 errorMessage: '',
                 data: {
-                    id: items[0].gameId,
+                    id: items[0].gameId.toString(),
                     firstPlayerProgress: {
                         answers: [...items[0].playerOneId.answers.map((el) => {
                             return {
-                                questionId: el.question.questionsId,
+                                questionId: el.question.questionsId.toString(),
                                 answerStatus: el.status,
                                 addedAt: el.createdAt
                             }
@@ -130,7 +136,7 @@ export class QuizQueryrepository {
                     secondPlayerProgress: items[0].playerTwoId === null ? null : {
                         answers: [...items[0].playerTwoId.answers.map((el) => {
                             return {
-                                questionId: el.question.questionsId,
+                                questionId: el.question.questionsId.toString(),
                                 answerStatus: el.status,
                                 addedAt: el.createdAt
                             }
@@ -144,7 +150,7 @@ export class QuizQueryrepository {
                     questions: [
                         ...items[0].questions.map((el) => {
                             return {
-                                id: el.question.questionsId,
+                                id: el.question.questionsId.toString(),
                                 body: el.question.body
                             }
 
@@ -208,79 +214,82 @@ export class QuizQueryrepository {
 
     }
 
-    async getPairMycurrent(playerId: string) {
+    async getPairMycurrent(userId: string) {
         try {
             debugger
-            const items = await this.game
+            const results = await this.game
                 .createQueryBuilder('g') // Псевдоним для таблицы 'bs'
-                .where("g.status = 'Active' OR g.status = 'PendingSecondPlayer'")
-                .leftJoinAndSelect('g.questions', 'q')
-                .leftJoinAndSelect('q.question', 'qE')
                 .leftJoinAndSelect('g.playerOneId', 'pO')
                 .leftJoinAndSelect('g.playerTwoId', 'pT')
+                .leftJoinAndSelect('pO.users', 'pOu')
+                .leftJoinAndSelect('pT.users', 'pTu')
+                .where('pOu.userId = :id OR pTu.userId = :id', { id: userId })
+                .leftJoinAndSelect('g.questions', 'q')
+                .leftJoinAndSelect('q.question', 'qE')
                 .leftJoinAndSelect('pO.answers', 'pOa')
                 .leftJoinAndSelect('pOa.question', 'qPo')
-                .leftJoinAndSelect('pO.users', 'pOu')
                 .leftJoinAndSelect('pT.answers', 'pTa')
                 .leftJoinAndSelect('pTa.question', 'qTa')
-                .leftJoinAndSelect('pT.users', 'pTu')
-                .andWhere('pO.users = :id', { id: playerId }) // Фильтруем по userId
-                .getOne()
+                .getMany()
+
+
+            const items = results.filter(el => el.status === 'Active' || el.status === 'PendingSecondPlayer')[0]
 
 
 
+            const data = {
+                id: items.gameId.toString(),
+                firstPlayerProgress: {
+                    answers: [...items.playerOneId?.answers.map((el) => {
+                        return {
+                            questionId: el.question.questionsId.toString(),
+                            answerStatus: el.status,
+                            addedAt: el.createdAt
+                        }
+                    })],
+                    player: {
+                        id: items?.playerOneId?.playerId.toString(),
+                        login: items?.playerOneId?.users.login
+                    },
+                    score: items.playerOneId.score
+                },
+                secondPlayerProgress: items?.playerTwoId === null ? null : {
+                    answers: [...items.playerTwoId.answers.map((el) => {
+                        return {
+                            questionId: el.question.questionsId.toString(),
+                            answerStatus: el.status,
+                            addedAt: el.createdAt
+                        }
+                    })],
+                    player: {
+                        id: items?.playerTwoId?.playerId.toString(),
+                        login: items?.playerTwoId?.users.login
+                    },
+                    score: items.playerTwoId.score
+                },
+                questions: items.questions.reverse().map(el => {
+                    return {
+                        id: el.question.questionsId.toString(),
+                        body: el.question.body
+                    }
+                }),
+                status: items.status,
+                pairCreatedDate: items.pairCreatedDate,
+                startGameDate: items.startGameDate,
+                finishGameDate: items.finishGameDate
 
+            }
+
+
+
+            console.log(data, "datadatadatadatadata")
 
 
             if (items) {
                 return {
                     result: true,
                     errorMessage: '',
-                    data: {
-                        id: items.gameId,
-                        firstPlayerProgress: {
-                            answers: [...items.playerOneId.answers.map((el) => {
-                                return {
-                                    questionId: el.question.questionsId,
-                                    answerStatus: el.status,
-                                    addedAt: el.createdAt
-                                }
-                            })],
-                            player: {
-                                id: items.playerOneId.playerId.toString(),
-                                login: items.playerOneId.users.login
-                            },
-                            score: items.playerOneId.score
-                        },
-                        secondPlayerProgress: items.playerTwoId === null ? null : {
-                            answers: [...items.playerTwoId.answers.map((el) => {
-                                return {
-                                    questionId: el.question.questionsId,
-                                    answerStatus: el.status,
-                                    addedAt: el.createdAt
-                                }
-                            })],
-                            player: {
-                                id: items.playerTwoId.playerId.toString(),
-                                login: items.playerTwoId.users.login
-                            },
-                            score: items.playerTwoId.score
-                        },
-                        questions: [
-                            ...items.questions.map((el) => {
-                                return {
-                                    id: el.question.questionsId,
-                                    body: el.question.body
-                                }
-
-                            })
-                        ],
-                        status: items.status,
-                        pairCreatedDate: items.pairCreatedDate,
-                        startGameDate: items.startGameDate,
-                        finishGameDate: items.finishGameDate
-
-                    }
+                    data: data
 
                 }
 
@@ -307,6 +316,28 @@ export class QuizQueryrepository {
 
     }
 
+    async getAnswerQuestion(gameId: string, playerId: string) {
+
+        try {
+            debugger
+            const results = await this.game
+                .createQueryBuilder('g')
+                .where('g.gameId = :id', { id: gameId }) // Фильтруем по userId
+                .leftJoinAndSelect('g.playerOneId', 'pO')
+                .leftJoinAndSelect('pO.answers', 'pOa')
+                .leftJoinAndSelect('g.playerTwoId', 'pT')
+                .leftJoinAndSelect('pT.answers', 'pTa')
+                .andWhere('(pO.playerId = :playerId OR pT.playerId = :playerId)', { playerId: playerId }) // Проверяем playerId
+                .getOne()
+
+
+
+
+        } catch (error) {
+
+        }
+
+    }
     async checkingAnswerPlayerUser(userId: number, gameId: number) {
         const items = await this.game
             .createQueryBuilder('g') // Псевдоним для таблицы 'bs'

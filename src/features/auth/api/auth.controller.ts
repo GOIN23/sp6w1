@@ -35,7 +35,8 @@ export class AuthController {
         res.cookie('refreshToken', token.refreshToken, {
             httpOnly: true, // Доступно только по HTTP(S), недоступно через JavaScript
             secure: true, // Установите в true, если используете HTTPS
-            maxAge: 30 * 24 * 60 * 60 * 1000, // Пример: 30 дней
+            maxAge: 30 * 24 * 60 * 60 * 1000, // Пример: 30 днейб
+
         });
 
         return res.json({ accessToken: token.accessToken });

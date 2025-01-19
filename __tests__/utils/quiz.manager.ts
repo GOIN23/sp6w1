@@ -43,4 +43,23 @@ export class QuizMamager {
 
     }
 
+    async createPairFull(inputUserOne: any, inputUserTwo: any) {
+        const data = [inputUserOne, inputUserTwo,]
+        let result
+
+
+
+        for (let i = 0; i < 2; i++) {
+            await this.authTestManger.registrationUser(data[i])
+            const tokens = await this.authTestManger.login({ loginOrEmail: data[i].login, password: data[i].password })
+
+            result = await request(this.app.getHttpServer())
+                .post('/api/pair-game-quiz/pairs/connection')
+                .set({ Authorization: "Bearer " + tokens.body.accessToken })
+
+
+        }
+        return result.body
+    }
+
 }
