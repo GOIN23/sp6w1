@@ -214,7 +214,7 @@ export class QuizQueryrepository {
 
     }
 
-    async getPairMycurrent(userId: string) {
+    async getPairMycurrent(userId: string, gameId?: string) {
         try {
             debugger
             const results = await this.game
@@ -232,21 +232,32 @@ export class QuizQueryrepository {
                 .leftJoinAndSelect('pTa.question', 'qTa')
                 .getMany()
 
+            let items
 
-            const items = results.filter(el => el.status === 'Active' || el.status === 'PendingSecondPlayer')[0]
+            if (gameId) {
+                items = results.filter(el => +el.gameId === +gameId)[0]
+            } else {
+                items = results.filter(el => el.status === 'Active' || el.status === 'PendingSecondPlayer')[0]
+
+            }
+
+
+
 
 
 
             const data = {
                 id: items.gameId.toString(),
                 firstPlayerProgress: {
-                    answers: [...items.playerOneId?.answers.map((el) => {
-                        return {
-                            questionId: el.question.questionsId.toString(),
-                            answerStatus: el.status,
-                            addedAt: el.createdAt
-                        }
-                    })],
+                    answers: items.playerOneId?.answers
+                        .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+                        .map((el) => {
+                            return {
+                                questionId: el.question.questionsId.toString(),
+                                answerStatus: el.status,
+                                addedAt: el.createdAt
+                            }
+                        }),
                     player: {
                         id: items?.playerOneId?.playerId.toString(),
                         login: items?.playerOneId?.users.login
@@ -254,25 +265,30 @@ export class QuizQueryrepository {
                     score: items.playerOneId.score
                 },
                 secondPlayerProgress: items?.playerTwoId === null ? null : {
-                    answers: [...items.playerTwoId.answers.map((el) => {
-                        return {
-                            questionId: el.question.questionsId.toString(),
-                            answerStatus: el.status,
-                            addedAt: el.createdAt
-                        }
-                    })],
+                    answers: items.playerTwoId?.answers
+                        .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+
+                        .map((el) => {
+                            return {
+                                questionId: el.question.questionsId.toString(),
+                                answerStatus: el.status,
+                                addedAt: el.createdAt
+                            }
+                        }),
                     player: {
                         id: items?.playerTwoId?.playerId.toString(),
                         login: items?.playerTwoId?.users.login
                     },
                     score: items.playerTwoId.score
                 },
-                questions: items.questions.reverse().map(el => {
-                    return {
-                        id: el.question.questionsId.toString(),
-                        body: el.question.body
-                    }
-                }),
+                questions: items.questions
+                    .sort((a, b) => a.question.questionsId - b.question.questionsId)
+                    .map(el => {
+                        return {
+                            id: el.question.questionsId.toString(),
+                            body: el.question.body
+                        }
+                    }),
                 status: items.status,
                 pairCreatedDate: items.pairCreatedDate,
                 startGameDate: items.startGameDate,
@@ -281,8 +297,6 @@ export class QuizQueryrepository {
             }
 
 
-
-            console.log(data, "datadatadatadatadata")
 
 
             if (items) {

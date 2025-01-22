@@ -112,6 +112,7 @@ export class QuizController {
     @UseGuards(JwtAuthGuardPassport)
     @HttpCode(200)
     async getMyCurrentAnswers(@Request() req: any, @Body() answer: string) {
+        debugger
 
 
         const result = await this.quizQueryrepository.getPairMycurrent(req.user.userId)
@@ -153,22 +154,30 @@ export class QuizController {
 
 
 
-        const resultRes = await this.quizQueryrepository.getPairMycurrent(req.user.userId)
+        const resultRes = await this.quizQueryrepository.getPairMycurrent(req.user.userId, result.data.id)
 
 
-        return {
+
+
+
+
+        const bodyRespo = {
             questionId: resultRes.data?.firstPlayerProgress?.player.id === res.playerId
-                ? resultRes.data?.firstPlayerProgress?.answers[resultRes.data?.firstPlayerProgress?.answers.length - 1]?.questionId
-                : resultRes.data?.secondPlayerProgress?.answers[resultRes.data?.secondPlayerProgress?.answers.length - 1]?.questionId,
-            answerStatus: resultRes.data?.firstPlayerProgress?.player.id === res.playerId
-                ? resultRes.data?.firstPlayerProgress?.answers[resultRes.data?.firstPlayerProgress?.answers.length - 1].answerStatus
+                ? resultRes.data?.firstPlayerProgress.answers[resultRes.data?.firstPlayerProgress.answers.length - 1].questionId
+                : resultRes.data?.secondPlayerProgress?.answers[resultRes.data?.secondPlayerProgress?.answers.length - 1].questionId,
+            answerStatus: resultRes.data?.firstPlayerProgress.player.id === res.playerId
+                ? resultRes.data?.firstPlayerProgress.answers[resultRes.data?.firstPlayerProgress.answers.length - 1].answerStatus
                 : resultRes.data?.secondPlayerProgress?.answers[resultRes.data?.secondPlayerProgress?.answers.length - 1].answerStatus,
-            addedAt: resultRes.data?.firstPlayerProgress?.player.id === res.playerId
-                ? resultRes.data?.firstPlayerProgress?.answers[resultRes.data?.firstPlayerProgress?.answers.length - 1].addedAt
+            addedAt: resultRes.data?.firstPlayerProgress.player.id === res.playerId
+                ? resultRes.data?.firstPlayerProgress.answers[resultRes.data?.firstPlayerProgress.answers.length - 1].addedAt
                 : resultRes.data?.secondPlayerProgress?.answers[resultRes.data?.secondPlayerProgress?.answers.length - 1].addedAt,
 
 
         }
+
+        console.log(bodyRespo, "bodyRespobodyRespobodyRespobodyRespo")
+
+        return bodyRespo
 
     }
 

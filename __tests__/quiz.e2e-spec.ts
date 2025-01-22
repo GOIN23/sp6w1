@@ -16,6 +16,7 @@ import { skipSettings } from "./utils/skip-settings";
 
 
 
+
 aDescribe(skipSettings.for('quizTest'))("user test", () => {
     let app: INestApplication;
     let authTestManger: AuthTestMannager;
@@ -138,6 +139,507 @@ aDescribe(skipSettings.for('quizTest'))("user test", () => {
 
     })
 
+
+    it("test postr", async () => {
+        const questions = await questionMamager.createQuestions(10)
+
+        console.log(questions, 'questionsquestionsquestions')
+        questions.items.reverse()
+
+        const userOneData = {
+            login: "fdgfdgd",
+            password: "string",
+            email: "4e5.k@mail.ru"
+        }
+        const userTwoData = {
+            login: "ali232",
+            password: "string",
+            email: "4e1.kn@mail.ru"
+        }
+
+        await authTestManger.registrationUser(userOneData)
+
+        await authTestManger.registrationUser(userTwoData)
+
+
+        const tokensUserOne = await authTestManger.login({ loginOrEmail: userOneData.login, password: userOneData.password })
+        const tokensUserTwo = await authTestManger.login({ loginOrEmail: userTwoData.login, password: userTwoData.password })
+
+
+
+        await quizMamager.createPairFull(userOneData, userTwoData)
+
+
+
+    })
+
+
+
+    it("add answers to first game, created by user1, connected by user2: add correct answer by firstPlayer; add correct answer by firstPlayer; add correct answer by secondPlayer; add correct answer by secondPlayer; add incorrect answer by firstPlayer; add correct answer by firstPlayer; add correct answer by secondPlayer; firstPlayer should win with 5 scores; get active game and call  my - current by both users after each answer", async () => {
+        const questions = await questionMamager.createQuestions(10)
+
+        questions.items.reverse()
+
+        const userOneData = {
+            login: "fdgfdgd",
+            password: "string",
+            email: "4e5.k@mail.ru"
+        }
+        const userTwoData = {
+            login: "ali232",
+            password: "string",
+            email: "4e1.kn@mail.ru"
+        }
+
+        await authTestManger.registrationUser(userOneData)
+
+        await authTestManger.registrationUser(userTwoData)
+
+
+        const tokensUserOne = await authTestManger.login({ loginOrEmail: userOneData.login, password: userOneData.password })
+        const tokensUserTwo = await authTestManger.login({ loginOrEmail: userTwoData.login, password: userTwoData.password })
+
+
+
+        await quizMamager.createPairFull(userOneData, userTwoData)
+
+
+
+        //add answers two coorect userOne a
+
+        const resultAnswerOneUserOne = await request(app.getHttpServer())
+            .post('/api/pair-game-quiz/pairs/my-current/answers')
+            .set({ Authorization: "Bearer " + tokensUserOne.body.accessToken })
+            .send({
+                answer: questions.items[0].correctAnswers[0]
+            })
+            .expect(200)
+
+
+        expect(resultAnswerOneUserOne.body).toEqual({
+            questionId: questions.items[0].id,
+            answerStatus: "Correct",
+            addedAt: expect.any(String)
+        })
+
+
+        const getOneMycurrentUserOne = await request(app.getHttpServer())
+            .get('/api/pair-game-quiz/pairs/my-current')
+            .set({ Authorization: "Bearer " + tokensUserOne.body.accessToken })
+            .expect(200)
+
+
+        expect(getOneMycurrentUserOne.body.firstPlayerProgress.answers).toEqual([
+            {
+                questionId: questions.items[0].id,
+                answerStatus: "Correct",
+                addedAt: expect.any(String)
+            }
+        ])
+
+
+
+        //two answer 
+
+        const resultAnswerTwoUserOne = await request(app.getHttpServer())
+            .post('/api/pair-game-quiz/pairs/my-current/answers')
+            .set({ Authorization: "Bearer " + tokensUserOne.body.accessToken })
+            .send({
+                answer: questions.items[1].correctAnswers[0]
+            })
+            .expect(200)
+
+
+        expect(resultAnswerTwoUserOne.body).toEqual({
+            questionId: questions.items[1].id,
+            answerStatus: "Correct",
+            addedAt: expect.any(String)
+        })
+
+
+        const getTwoMycurrentUserOne = await request(app.getHttpServer())
+            .get('/api/pair-game-quiz/pairs/my-current')
+            .set({ Authorization: "Bearer " + tokensUserOne.body.accessToken })
+            .expect(200)
+
+
+        expect(getTwoMycurrentUserOne.body.firstPlayerProgress.answers).toEqual(
+            [
+                {
+                    questionId: questions.items[0].id,
+                    answerStatus: "Correct",
+                    addedAt: expect.any(String)
+                },
+                {
+                    questionId: questions.items[1].id,
+                    answerStatus: "Correct",
+                    addedAt: expect.any(String)
+                }]
+        )
+
+
+
+
+        // add answers two coorect userTwo a
+
+
+        const resultAnswerOneUserTwo = await request(app.getHttpServer())
+            .post('/api/pair-game-quiz/pairs/my-current/answers')
+            .set({ Authorization: "Bearer " + tokensUserTwo.body.accessToken })
+            .send({
+                answer: questions.items[0].correctAnswers[0]
+            })
+            .expect(200)
+
+
+        expect(resultAnswerOneUserTwo.body).toEqual({
+            questionId: questions.items[0].id,
+            answerStatus: "Correct",
+            addedAt: expect.any(String)
+        })
+
+
+        const getOneMycurrentUserTwo = await request(app.getHttpServer())
+            .get('/api/pair-game-quiz/pairs/my-current')
+            .set({ Authorization: "Bearer " + tokensUserTwo.body.accessToken })
+            .expect(200)
+
+
+        expect(getOneMycurrentUserTwo.body.secondPlayerProgress.answers).toEqual([
+            {
+                questionId: questions.items[0].id,
+                answerStatus: "Correct",
+                addedAt: expect.any(String)
+            }
+        ])
+
+
+
+        // two answer 
+
+        const resultAnswerTwoUserTwo = await request(app.getHttpServer())
+            .post('/api/pair-game-quiz/pairs/my-current/answers')
+            .set({ Authorization: "Bearer " + tokensUserTwo.body.accessToken })
+            .send({
+                answer: questions.items[1].correctAnswers[0]
+            })
+            .expect(200)
+
+
+        expect(resultAnswerTwoUserTwo.body).toEqual({
+            questionId: questions.items[1].id,
+            answerStatus: "Correct",
+            addedAt: expect.any(String)
+        })
+
+
+        const getTwoMycurrentUserTwo = await request(app.getHttpServer())
+            .get('/api/pair-game-quiz/pairs/my-current')
+            .set({ Authorization: "Bearer " + tokensUserTwo.body.accessToken })
+            .expect(200)
+
+
+        expect(getTwoMycurrentUserTwo.body.secondPlayerProgress.answers).toEqual(
+            [
+                {
+                    questionId: questions.items[0].id,
+                    answerStatus: "Correct",
+                    addedAt: expect.any(String)
+                },
+                {
+                    questionId: questions.items[1].id,
+                    answerStatus: "Correct",
+                    addedAt: expect.any(String)
+                }]
+        )
+
+
+
+
+
+        //add incorrect userTwo 
+
+        const resultAnswerThreeUserOne = await request(app.getHttpServer())
+            .post('/api/pair-game-quiz/pairs/my-current/answers')
+            .set({ Authorization: "Bearer " + tokensUserOne.body.accessToken })
+            .send({
+                answer: "Incorrect"
+            })
+            .expect(200)
+
+
+        expect(resultAnswerThreeUserOne.body).toEqual({
+            questionId: questions.items[2].id,
+            answerStatus: "Incorrect",
+            addedAt: expect.any(String)
+        })
+
+
+        const getThreMycurrentUserOne = await request(app.getHttpServer())
+            .get('/api/pair-game-quiz/pairs/my-current')
+            .set({ Authorization: "Bearer " + tokensUserOne.body.accessToken })
+            .expect(200)
+
+
+        expect(getThreMycurrentUserOne.body.firstPlayerProgress.answers).toEqual(
+            [
+                {
+                    questionId: questions.items[0].id,
+                    answerStatus: "Correct",
+                    addedAt: expect.any(String)
+                },
+                {
+                    questionId: questions.items[1].id,
+                    answerStatus: "Correct",
+                    addedAt: expect.any(String)
+                },
+                {
+                    questionId: questions.items[2].id,
+                    answerStatus: "Incorrect",
+                    addedAt: expect.any(String)
+                },
+
+            ]
+        )
+
+
+        //add one answer correct userTwo 
+        const resultAnswerThreeUserTwo = await request(app.getHttpServer())
+            .post('/api/pair-game-quiz/pairs/my-current/answers')
+            .set({ Authorization: "Bearer " + tokensUserTwo.body.accessToken })
+            .send({
+                answer: questions.items[2].correctAnswers[0]
+            })
+            .expect(200)
+
+
+        expect(resultAnswerThreeUserTwo.body).toEqual({
+            questionId: questions.items[2].id,
+            answerStatus: "Correct",
+            addedAt: expect.any(String)
+        })
+
+
+        const getThreeMycurrentUserTwo = await request(app.getHttpServer())
+            .get('/api/pair-game-quiz/pairs/my-current')
+            .set({ Authorization: "Bearer " + tokensUserTwo.body.accessToken })
+            .expect(200)
+
+
+        expect(getThreeMycurrentUserTwo.body.secondPlayerProgress.answers).toEqual(
+            [
+                {
+                    questionId: questions.items[0].id,
+                    answerStatus: "Correct",
+                    addedAt: expect.any(String)
+                },
+                {
+                    questionId: questions.items[1].id,
+                    answerStatus: "Correct",
+                    addedAt: expect.any(String)
+                },
+                {
+                    questionId: questions.items[2].id,
+                    answerStatus: "Correct",
+                    addedAt: expect.any(String)
+                }
+            ]
+        )
+
+
+
+        //full awent
+
+        const resultAnswerFourUserTwo = await request(app.getHttpServer())
+            .post('/api/pair-game-quiz/pairs/my-current/answers')
+            .set({ Authorization: "Bearer " + tokensUserTwo.body.accessToken })
+            .send({
+                answer: questions.items[3].correctAnswers[0]
+            })
+            .expect(200)
+
+
+        expect(resultAnswerFourUserTwo.body).toEqual({
+            questionId: questions.items[3].id,
+            answerStatus: "Correct",
+            addedAt: expect.any(String)
+        })
+
+        const getFourMycurrentUserTwo = await request(app.getHttpServer())
+            .get('/api/pair-game-quiz/pairs/my-current')
+            .set({ Authorization: "Bearer " + tokensUserTwo.body.accessToken })
+            .expect(200)
+
+
+        expect(getFourMycurrentUserTwo.body.secondPlayerProgress.answers).toEqual(
+            [
+                {
+                    questionId: questions.items[0].id,
+                    answerStatus: "Correct",
+                    addedAt: expect.any(String)
+                },
+                {
+                    questionId: questions.items[1].id,
+                    answerStatus: "Correct",
+                    addedAt: expect.any(String)
+                },
+                {
+                    questionId: questions.items[2].id,
+                    answerStatus: "Correct",
+                    addedAt: expect.any(String)
+                },
+                {
+                    questionId: questions.items[3].id,
+                    answerStatus: "Correct",
+                    addedAt: expect.any(String)
+                }
+            ]
+        )
+
+
+
+
+    })
+
+    it.only("add answers to first game, created by user1, connected by user2 add correct answer by firstPlayer; add incorrect answer by secondPlayer; add correct answer by secondPlayer; get my-cuurent active game and call by both users after each answe", async () => {
+        const questions = await questionMamager.createQuestions(10)
+
+        questions.items.reverse()
+
+        const userOneData = {
+            login: "fdgfdgd",
+            password: "string",
+            email: "4e5.k@mail.ru"
+        }
+        const userTwoData = {
+            login: "ali232",
+            password: "string",
+            email: "4e1.kn@mail.ru"
+        }
+
+        await authTestManger.registrationUser(userOneData)
+
+        await authTestManger.registrationUser(userTwoData)
+
+
+        const tokensUserOne = await authTestManger.login({ loginOrEmail: userOneData.login, password: userOneData.password })
+        const tokensUserTwo = await authTestManger.login({ loginOrEmail: userTwoData.login, password: userTwoData.password })
+
+
+
+        await quizMamager.createPairFull(userOneData, userTwoData)
+
+        const resultAnswerOneUserOne = await request(app.getHttpServer())
+            .post('/api/pair-game-quiz/pairs/my-current/answers')
+            .set({ Authorization: "Bearer " + tokensUserOne.body.accessToken })
+            .send({
+                answer: questions.items[0].correctAnswers[0]
+            })
+            .expect(200)
+
+
+        expect(resultAnswerOneUserOne.body).toEqual({
+            questionId: questions.items[0].id,
+            answerStatus: "Correct",
+            addedAt: expect.any(String)
+        })
+
+
+        const getOneMycurrentUserOne = await request(app.getHttpServer())
+            .get('/api/pair-game-quiz/pairs/my-current')
+            .set({ Authorization: "Bearer " + tokensUserOne.body.accessToken })
+            .expect(200)
+
+
+        expect(getOneMycurrentUserOne.body.firstPlayerProgress.answers).toEqual([
+            {
+                questionId: questions.items[0].id,
+                answerStatus: "Correct",
+                addedAt: expect.any(String)
+            }
+        ])
+
+
+
+
+
+
+        const resultAnswerOneUserTwo = await request(app.getHttpServer())
+            .post('/api/pair-game-quiz/pairs/my-current/answers')
+            .set({ Authorization: "Bearer " + tokensUserTwo.body.accessToken })
+            .send({
+                answer: "Incorrect"
+            })
+            .expect(200)
+
+
+        expect(resultAnswerOneUserTwo.body).toEqual({
+            questionId: questions.items[0].id,
+            answerStatus: "Incorrect",
+            addedAt: expect.any(String)
+        })
+
+
+        const getOneMycurrentUserTwo = await request(app.getHttpServer())
+            .get('/api/pair-game-quiz/pairs/my-current')
+            .set({ Authorization: "Bearer " + tokensUserTwo.body.accessToken })
+            .expect(200)
+
+
+        expect(getOneMycurrentUserTwo.body.secondPlayerProgress.answers).toEqual([
+            {
+                questionId: questions.items[0].id,
+                answerStatus: "Incorrect",
+                addedAt: expect.any(String)
+            }
+        ])
+
+
+
+        ///////////////////////
+
+
+
+        const resultAnswerTwoUserTwo = await request(app.getHttpServer())
+            .post('/api/pair-game-quiz/pairs/my-current/answers')
+            .set({ Authorization: "Bearer " + tokensUserTwo.body.accessToken })
+            .send({
+                answer: questions.items[1].correctAnswers[0]
+            })
+            .expect(200)
+
+
+        expect(resultAnswerTwoUserTwo.body).toEqual({
+            questionId: questions.items[1].id,
+            answerStatus: "Correct",
+            addedAt: expect.any(String)
+        })
+
+
+        const getTwoMycurrentUserTwo = await request(app.getHttpServer())
+            .get('/api/pair-game-quiz/pairs/my-current')
+            .set({ Authorization: "Bearer " + tokensUserTwo.body.accessToken })
+            .expect(200)
+
+
+        expect(getTwoMycurrentUserTwo.body.secondPlayerProgress.answers).toEqual([
+            {
+                questionId: questions.items[0].id,
+                answerStatus: "Incorrect",
+                addedAt: expect.any(String)
+            }
+            ,
+            {
+                questionId: questions.items[1].id,
+                answerStatus: "Correct",
+                addedAt: expect.any(String)
+            }
+        ])
+
+
+
+
+    })
 
 
 })
