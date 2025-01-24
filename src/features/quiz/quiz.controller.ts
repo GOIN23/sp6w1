@@ -131,20 +131,21 @@ export class QuizController {
         const checPlayerUser = await this.quizQueryrepository.checkingAnswerPlayerUser(req.user.userId, +result.data.id)
         let res: any
 
-        if (checPlayerUser === 'playerOne') {
-            res = { playerId: result.data.firstPlayerProgress.player.id, scoreCurrentPlayer: result.data.firstPlayerProgress.score }
+        if (checPlayerUser.isPlayer === 'playerOne') {
+            res = { playerId: checPlayerUser.data.playerOneId.playerId, scoreCurrentPlayer: result.data.firstPlayerProgress.score }
         } else {
-            res = { playerId: result.data.secondPlayerProgress.player.id, scoreCurrentPlayer: result.data.secondPlayerProgress.score }
+            res = { playerId: checPlayerUser.data.playerTwoId.playerId, scoreCurrentPlayer: result.data.secondPlayerProgress.score }
         }
+
 
         // const checPlayerUser = await this.quizQueryrepository.checkingAnswerPlayerUser(req.user.userId, result.data.id) === 'playerOne' ? { playerId: result.data.firstPlayerProgress.player.id, scoreCurrentPlayer: result.data.firstPlayerProgress.score } : { playerId: result.data.secondPlayerProgress.player.id, scoreCurrentPlayer: result.data.secondPlayerProgress.score } // здесь определяем какой это игрок
 
-        const twoPlayer = checPlayerUser === 'playerOne'
-            ? { playerId: result.data.secondPlayerProgress.player.id, scoreCurrentPlayer: result.data.secondPlayerProgress.score }
-            : { playerId: result.data.firstPlayerProgress.player.id, scoreCurrentPlayer: result.data.firstPlayerProgress.score }
+        const twoPlayer = checPlayerUser.isPlayer === 'playerOne'
+            ? { playerId: checPlayerUser.data.playerTwoId.playerId, scoreCurrentPlayer: result.data.secondPlayerProgress.score }
+            : { playerId: checPlayerUser.data.playerOneId.playerId.toString(), scoreCurrentPlayer: result.data.firstPlayerProgress.score }
 
 
-        const obj = await this.commandBuse.execute(new SendAnswersCommand(result.data.id.toString(), res.playerId, answer, res.scoreCurrentPlayer.toString(), twoPlayer.playerId))
+        const obj = await this.commandBuse.execute(new SendAnswersCommand(result.data.id.toString(), res.playerId, answer, res.scoreCurrentPlayer.toString(), `${twoPlayer.playerId}`))
 
 
         if (obj.errorMessage === 'user is in active pair but has already answered to all questions') {
@@ -162,13 +163,13 @@ export class QuizController {
 
 
         const bodyRespo = {
-            questionId: resultRes.data?.firstPlayerProgress?.player.id === res.playerId
+            questionId: resultRes.dataFull?.playerOneId?.playerId === res.playerId
                 ? resultRes.data?.firstPlayerProgress.answers[resultRes.data?.firstPlayerProgress.answers.length - 1].questionId
                 : resultRes.data?.secondPlayerProgress?.answers[resultRes.data?.secondPlayerProgress?.answers.length - 1].questionId,
-            answerStatus: resultRes.data?.firstPlayerProgress.player.id === res.playerId
+            answerStatus: resultRes.dataFull?.playerOneId?.playerId === res.playerId
                 ? resultRes.data?.firstPlayerProgress.answers[resultRes.data?.firstPlayerProgress.answers.length - 1].answerStatus
                 : resultRes.data?.secondPlayerProgress?.answers[resultRes.data?.secondPlayerProgress?.answers.length - 1].answerStatus,
-            addedAt: resultRes.data?.firstPlayerProgress.player.id === res.playerId
+            addedAt: resultRes.dataFull?.playerOneId?.playerId === res.playerId
                 ? resultRes.data?.firstPlayerProgress.answers[resultRes.data?.firstPlayerProgress.answers.length - 1].addedAt
                 : resultRes.data?.secondPlayerProgress?.answers[resultRes.data?.secondPlayerProgress?.answers.length - 1].addedAt,
 

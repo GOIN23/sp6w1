@@ -215,7 +215,6 @@ export class QuizQueryrepository {
 
     async getPairMycurrent(userId: string, gameId?: string) {
         try {
-            debugger
             const results = await this.game
                 .createQueryBuilder('g') // Псевдоним для таблицы 'bs'
                 .leftJoinAndSelect('g.playerOneId', 'pO')
@@ -239,6 +238,7 @@ export class QuizQueryrepository {
                 items = results.filter(el => el.status === 'Active' || el.status === 'PendingSecondPlayer')[0]
 
             }
+
 
 
 
@@ -302,7 +302,8 @@ export class QuizQueryrepository {
                 return {
                     result: true,
                     errorMessage: '',
-                    data: data
+                    data: data,
+                    dataFull: items
 
                 }
 
@@ -351,6 +352,7 @@ export class QuizQueryrepository {
         }
 
     }
+
     async checkingAnswerPlayerUser(userId: number, gameId: number) {
         const items = await this.game
             .createQueryBuilder('g') // Псевдоним для таблицы 'bs'
@@ -364,7 +366,10 @@ export class QuizQueryrepository {
 
         const result = +items.playerOneId.users.userId === +userId ? 'playerOne' : 'playerTwo'
 
-        return result
+        return {
+            isPlayer: result,
+            data: items
+        }
     }
 
     async getQuestionById(id: string): Promise<ResultObject<OutputQuestionsGetById | null>> {
