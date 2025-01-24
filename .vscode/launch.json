@@ -1,0 +1,26 @@
+{
+  // Use IntelliSense to learn about possible attributes.
+  // Hover to view descriptions of existing attributes.
+  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug Jest Tests",
+      "type": "node",
+      "request": "launch",
+      "skipFiles": ["<node_internals>/**"],
+      "program": "${workspaceFolder}/node_modules/.bin/jest", // Запуск Jest
+      "args": [
+        "--runInBand", // Запуск тестов по одному, без параллельного выполнения
+        "--config",
+        "jest-e2e.json", // Указываем конфигурационный файл Jest
+        "--watchAll=false" // Отключаем режим "watch" (чтобы тесты не выполнялись при изменении файлов)
+      ],
+      "autoAttachChildProcesses": true,
+      "env": {
+        "NODE_ENV": "test"
+      },
+      "sourceMaps": true
+    }
+  ]
+}

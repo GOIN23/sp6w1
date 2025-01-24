@@ -2,6 +2,7 @@ import { INestApplication } from "@nestjs/common";
 import * as request from 'supertest';
 import { DataSource } from "typeorm";
 import { AuthTestMannager } from "./auth-test-manager";
+import { delay } from "./delay";
 
 
 
@@ -60,6 +61,52 @@ export class QuizMamager {
 
         }
         return result.body
+    }
+
+    async createGamesWithStatusFinish(count: number, inputUserOne: any, inputUserTwo: any, authData: any) {
+        let result = []
+        for (let i = 0; i < count; i++) {
+            await this.createPairFull(inputUserOne, inputUserTwo)
+
+
+            for (let i = 0; i < 5; i++) {
+                await request(this.app.getHttpServer())
+                    .post('/api/pair-game-quiz/pairs/my-current/answers')
+                    .set({ Authorization: "Bearer " + authData.tokensUserOne.body.accessToken })
+                    .send({
+                        answer: 'answer'
+                    })
+                    .expect(200)
+
+
+                delay(1000)
+                await request(this.app.getHttpServer())
+                    .post('/api/pair-game-quiz/pairs/my-current/answers')
+                    .set({ Authorization: "Bearer " + authData.tokensUserTwo.body.accessToken })
+                    .send({
+                        answer: 'answer'
+                    })
+                    .expect(200)
+
+
+
+            }
+
+
+            const paip = await request(this.app.getHttpServer())
+                .get(`/api/pair-game-quiz/pairs/${i + 1}`)
+                .set({ Authorization: "Bearer " + authData.tokensUserOne.body.accessToken })
+                .expect(200)
+
+            result.push(paip.body)
+
+
+        }
+
+
+
+
+        return result
     }
 
 }

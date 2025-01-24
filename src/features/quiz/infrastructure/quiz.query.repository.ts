@@ -24,7 +24,6 @@ export class QuizQueryrepository {
     async getPairById(gameId: string, userId?: string) {
 
         try {
-            debugger
             if (userId) {
                 const items = await this.game
                     .createQueryBuilder('g') // Псевдоним для таблицы 'bs'
@@ -55,7 +54,7 @@ export class QuizQueryrepository {
                                 }
                             })],
                             player: {
-                                id: items[0].playerOneId.playerId.toString(),
+                                id: items[0].playerOneId.users.userId.toString(),
                                 login: items[0].playerOneId.users.login
                             },
                             score: items[0].playerOneId.score
@@ -69,7 +68,7 @@ export class QuizQueryrepository {
                                 }
                             })],
                             player: {
-                                id: items[0].playerTwoId.playerId.toString(),
+                                id: items[0].playerTwoId.users.userId.toString(),
                                 login: items[0].playerTwoId.users.login
                             },
                             score: items[0].playerTwoId.score
@@ -128,7 +127,7 @@ export class QuizQueryrepository {
                             }
                         })],
                         player: {
-                            id: items[0].playerOneId.playerId.toString(),
+                            id: items[0].playerOneId.users.userId.toString(),
                             login: items[0].playerOneId.users.login
                         },
                         score: items[0].playerOneId.score
@@ -142,7 +141,7 @@ export class QuizQueryrepository {
                             }
                         })],
                         player: {
-                            id: items[0].playerTwoId.playerId.toString(),
+                            id: items[0].playerTwoId.users.userId.toString(),
                             login: items[0].playerTwoId.users.login
                         },
                         score: items[0].playerTwoId.score
@@ -259,7 +258,7 @@ export class QuizQueryrepository {
                             }
                         }),
                     player: {
-                        id: items?.playerOneId?.playerId.toString(),
+                        id: items?.playerOneId?.users.userId.toString(),
                         login: items?.playerOneId?.users.login
                     },
                     score: items.playerOneId.score
@@ -276,7 +275,7 @@ export class QuizQueryrepository {
                             }
                         }),
                     player: {
-                        id: items?.playerTwoId?.playerId.toString(),
+                        id: items?.playerTwoId?.users.userId.toString(),
                         login: items?.playerTwoId?.users.login
                     },
                     score: items.playerTwoId.score

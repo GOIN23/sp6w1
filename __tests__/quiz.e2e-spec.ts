@@ -51,6 +51,38 @@ aDescribe(skipSettings.for('quizTest'))("user test", () => {
             .delete('/api/testing/all-data');
     });
 
+    it("test postr", async () => {
+        const questions = await questionMamager.createQuestions(10)
+
+        console.log(questions, 'questionsquestionsquestions')
+        questions.items.reverse()
+
+        const userOneData = {
+            login: "fdgfdgd",
+            password: "string",
+            email: "4e5.k@mail.ru"
+        }
+        const userTwoData = {
+            login: "ali232",
+            password: "string",
+            email: "4e1.kn@mail.ru"
+        }
+
+        await authTestManger.registrationUser(userOneData)
+
+        await authTestManger.registrationUser(userTwoData)
+
+
+        const tokensUserOne = await authTestManger.login({ loginOrEmail: userOneData.login, password: userOneData.password })
+        const tokensUserTwo = await authTestManger.login({ loginOrEmail: userTwoData.login, password: userTwoData.password })
+
+
+
+        await quizMamager.createPairFull(userOneData, userTwoData)
+
+
+
+    })
 
 
     it("+ creating a pair and receiving questions", async () => {
@@ -138,41 +170,6 @@ aDescribe(skipSettings.for('quizTest'))("user test", () => {
         })
 
     })
-
-
-    it("test postr", async () => {
-        const questions = await questionMamager.createQuestions(10)
-
-        console.log(questions, 'questionsquestionsquestions')
-        questions.items.reverse()
-
-        const userOneData = {
-            login: "fdgfdgd",
-            password: "string",
-            email: "4e5.k@mail.ru"
-        }
-        const userTwoData = {
-            login: "ali232",
-            password: "string",
-            email: "4e1.kn@mail.ru"
-        }
-
-        await authTestManger.registrationUser(userOneData)
-
-        await authTestManger.registrationUser(userTwoData)
-
-
-        const tokensUserOne = await authTestManger.login({ loginOrEmail: userOneData.login, password: userOneData.password })
-        const tokensUserTwo = await authTestManger.login({ loginOrEmail: userTwoData.login, password: userTwoData.password })
-
-
-
-        await quizMamager.createPairFull(userOneData, userTwoData)
-
-
-
-    })
-
 
 
     it("add answers to first game, created by user1, connected by user2: add correct answer by firstPlayer; add correct answer by firstPlayer; add correct answer by secondPlayer; add correct answer by secondPlayer; add incorrect answer by firstPlayer; add correct answer by firstPlayer; add correct answer by secondPlayer; firstPlayer should win with 5 scores; get active game and call  my - current by both users after each answer", async () => {
@@ -501,7 +498,7 @@ aDescribe(skipSettings.for('quizTest'))("user test", () => {
 
     })
 
-    it.only("add answers to first game, created by user1, connected by user2 add correct answer by firstPlayer; add incorrect answer by secondPlayer; add correct answer by secondPlayer; get my-cuurent active game and call by both users after each answe", async () => {
+    it("add answers to first game, created by user1, connected by user2 add correct answer by firstPlayer; add incorrect answer by secondPlayer; add correct answer by secondPlayer; get my-cuurent active game and call by both users after each answe", async () => {
         const questions = await questionMamager.createQuestions(10)
 
         questions.items.reverse()
@@ -641,6 +638,207 @@ aDescribe(skipSettings.for('quizTest'))("user test", () => {
 
     })
 
+    it.only('create third game by user2, connect to the game by user1, then add correct answer by firstPlayer;add incorrect answer by secondPlayer;add correct answer by secondPlayer;', async () => {
+        debugger
+        const questions = await questionMamager.createQuestions(10)
+
+        questions.items.reverse()
+
+        const userOneData = {
+            login: "fdgfdgd",
+            password: "string",
+            email: "4e5.k@mail.ru"
+        }
+        const userTwoData = {
+            login: "ali232",
+            password: "string",
+            email: "4e1.kn@mail.ru"
+        }
+
+        await authTestManger.registrationUser(userOneData)
+
+        await authTestManger.registrationUser(userTwoData)
+
+
+        const tokensUserOne = await authTestManger.login({ loginOrEmail: userOneData.login, password: userOneData.password })
+        const tokensUserTwo = await authTestManger.login({ loginOrEmail: userTwoData.login, password: userTwoData.password })
+
+
+
+
+        // const pairs = await quizMamager.createGamesWithStatusFinish(2, userOneData, userTwoData, {
+        //     tokensUserOne: tokensUserOne,
+        //     tokensUserTwo: tokensUserTwo
+
+        // })
+
+
+
+
+
+
+        await quizMamager.createPairFull(userTwoData, userOneData)//// создание user2 третью игру
+
+
+
+        // console.log(pairs, 'fsdfsdfsd')
+        // console.log(pairs[0].firstPlayerProgress)
+        // console.log(pairs[0].secondPlayerProgress)
+
+        // console.log(pairs[1].firstPlayerProgress)
+        // console.log(pairs[1].secondPlayerProgress)
+
+
+
+
+        const resultAnswerOneFirstPlayer = await request(app.getHttpServer())
+            .post('/api/pair-game-quiz/pairs/my-current/answers')
+            .set({ Authorization: "Bearer " + tokensUserTwo.body.accessToken })
+            .send({
+                answer: questions.items[0].correctAnswers[0]
+            })
+            .expect(200)// add correct answer by firstPlayer(user2)
+
+
+        expect(resultAnswerOneFirstPlayer.body).toEqual({
+            questionId: questions.items[0].id,
+            answerStatus: "Correct",
+            addedAt: expect.any(String)
+        })
+
+
+        const getTwoMycurrenFirstPlayer = await request(app.getHttpServer())
+            .get('/api/pair-game-quiz/pairs/my-current')
+            .set({ Authorization: "Bearer " + tokensUserTwo.body.accessToken })
+            .expect(200)
+
+
+
+        console.log(getTwoMycurrenFirstPlayer.body, "firstPlayer(user2)")
+
+
+        expect(getTwoMycurrenFirstPlayer.body.firstPlayerProgress.answers).toEqual([
+
+            {
+                questionId: questions.items[0].id,
+                answerStatus: "Correct",
+                addedAt: expect.any(String)
+            }
+        ])
+
+
+
+        const pairId = await request(app.getHttpServer())
+            .get(`/api/pair-game-quiz/pairs/${getTwoMycurrenFirstPlayer.body.id}`)
+            .set({ Authorization: "Bearer " + tokensUserTwo.body.accessToken })
+            .expect(200)
+
+
+
+        console.log(pairId.body, "pairIdpairIdpairIdpairIdpaigdfgdfgdfrIdpairId")
+
+
+        // ---------------secondPlayer(User1) добавить неправльный ответ ------------------
+
+        const resultAnswerOneSecondPlayer = await request(app.getHttpServer())
+            .post('/api/pair-game-quiz/pairs/my-current/answers')
+            .set({ Authorization: "Bearer " + tokensUserOne.body.accessToken })
+            .send({
+                answer: "incorrect"
+            })
+            .expect(200)// add incorrect answer by secondPlayer(user1)
+
+
+        expect(resultAnswerOneSecondPlayer.body).toEqual({
+            questionId: questions.items[0].id,
+            answerStatus: "Incorrect",
+            addedAt: expect.any(String)
+        })
+
+
+        const getTwoMycurrenSecondPlayer = await request(app.getHttpServer())
+            .get('/api/pair-game-quiz/pairs/my-current')
+            .set({ Authorization: "Bearer " + tokensUserOne.body.accessToken })
+            .expect(200)
+
+
+
+        console.log(getTwoMycurrenSecondPlayer.body, "secondPlayer(user1)")
+
+
+        expect(getTwoMycurrenSecondPlayer.body.secondPlayerProgress.answers).toEqual([
+
+            {
+                questionId: questions.items[0].id,
+                answerStatus: "Incorrect",
+                addedAt: expect.any(String)
+            }
+        ])
+
+
+        // --------------- ------------------------------ -------------------------------------------
+
+
+        // --------------------secondPlayer(User1) добавить правильный ответ----------------------------
+
+        const resultAnswerTwoSecondPlayer = await request(app.getHttpServer())
+            .post('/api/pair-game-quiz/pairs/my-current/answers')
+            .set({ Authorization: "Bearer " + tokensUserOne.body.accessToken })
+            .send({
+                answer: questions.items[1].correctAnswers[0]
+            })
+            .expect(200)// add correct answer by secondPlayer(user1)
+
+
+        expect(resultAnswerTwoSecondPlayer.body).toEqual({
+            questionId: questions.items[1].id,
+            answerStatus: "Correct",
+            addedAt: expect.any(String)
+        })
+
+
+        const getTwooMycurrenSecondPlayer = await request(app.getHttpServer())
+            .get('/api/pair-game-quiz/pairs/my-current')
+            .set({ Authorization: "Bearer " + tokensUserOne.body.accessToken })
+            .expect(200)
+
+
+
+        console.log(getTwooMycurrenSecondPlayer.body, "add correct answer by secondPlayer(user1)")
+
+
+        expect(getTwooMycurrenSecondPlayer.body.secondPlayerProgress.answers).toEqual([
+
+            {
+                questionId: questions.items[0].id,
+                answerStatus: "Incorrect",
+                addedAt: expect.any(String)
+            }
+            ,
+
+            {
+                questionId: questions.items[1].id,
+                answerStatus: "Correct",
+                addedAt: expect.any(String)
+            }
+        ])
+
+
+
+
+
+
+        const pairId2 = await request(app.getHttpServer())
+            .get(`/api/pair-game-quiz/pairs/${getTwoMycurrenFirstPlayer.body.id}`)
+            .set({ Authorization: "Bearer " + tokensUserTwo.body.accessToken })
+            .expect(200)
+
+
+
+        console.log(pairId2.body, "pairIdpairIdpairIdpairIdpairIdpairId2312312312312")
+
+
+    })
 
 })
 
